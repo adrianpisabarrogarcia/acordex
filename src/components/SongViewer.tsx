@@ -72,6 +72,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   const [fontSize, setFontSize] = useState(17); // px default for mobile readability
   const [stageMode, setStageMode] = useState(false);
   const [projectorMode, setProjectorMode] = useState(false);
+  const [showChordsInTvMode, setShowChordsInTvMode] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [fadeState, setFadeState] = useState<'in' | 'out'>('in');
@@ -109,19 +110,21 @@ export const SongViewer: React.FC<SongViewerProps> = ({
     }
   }, [slideIndex, projectorMode, fontScale]);
 
-  // Parse pure lyrics grouped into slides for TV Presentation Mode (without chords)
-  const slides: Slide[] = React.useMemo(() => {
+  // Parse pure lyrics & raw lines grouped into slides for TV Presentation Mode
+  const slides: { title: string; lines: string[]; rawLines: string[] }[] = React.useMemo(() => {
     const rawLines = rawContent.split('\n');
-    const result: Slide[] = [];
+    const result: { title: string; lines: string[]; rawLines: string[] }[] = [];
     let currentTitle = 'Letra';
     let currentLines: string[] = [];
+    let currentRawLines: string[] = [];
 
     rawLines.forEach((line) => {
       const trimmed = line.trim();
       if (!trimmed) {
-        if (currentLines.length > 0) {
-          result.push({ title: currentTitle, lines: currentLines });
+        if (currentLines.length > 0 || currentRawLines.length > 0) {
+          result.push({ title: currentTitle, lines: currentLines, rawLines: currentRawLines });
           currentLines = [];
+          currentRawLines = [];
         }
         return;
       }
@@ -130,26 +133,27 @@ export const SongViewer: React.FC<SongViewerProps> = ({
       const isHeaderLine = /^\[\s*(verso|estribillo|intro|coro|puente|outro|solo|sólo|letra|estrofa|pre-coro|pre-estribillo|versos)/i.test(trimmed);
 
       if (isHeaderLine) {
-        if (currentLines.length > 0) {
-          result.push({ title: currentTitle, lines: currentLines });
+        if (currentLines.length > 0 || currentRawLines.length > 0) {
+          result.push({ title: currentTitle, lines: currentLines, rawLines: currentRawLines });
           currentLines = [];
+          currentRawLines = [];
         }
         currentTitle = trimmed.replace(/^\[/, '').replace(/\]$/, '').replace(/\]\s*\[/g, ' ');
         return;
       }
 
-      // Strip bracketed chords [G], [Em7] etc. to leave pure lyrics
+      currentRawLines.push(line);
       const pureLyrics = trimmed.replace(/\[[^\]]+\]/g, '').replace(/\s+/g, ' ').trim();
-      if (pureLyrics) {
+      if (pureLyrics || /^(\[[A-G][#b]?[^\]]*\]\s*)+$/i.test(trimmed)) {
         currentLines.push(pureLyrics);
       }
     });
 
-    if (currentLines.length > 0) {
-      result.push({ title: currentTitle, lines: currentLines });
+    if (currentLines.length > 0 || currentRawLines.length > 0) {
+      result.push({ title: currentTitle, lines: currentLines, rawLines: currentRawLines });
     }
 
-    return result.filter((s) => s.lines.length > 0);
+    return result.filter((s) => s.lines.length > 0 || s.rawLines.length > 0);
   }, [rawContent]);
 
   const toggleProjectorMode = () => {
@@ -238,19 +242,49 @@ export const SongViewer: React.FC<SongViewerProps> = ({
       {projectorMode ? (
         <div className="fixed inset-0 z-[9999] bg-black text-white flex flex-col justify-between p-6 sm:p-12 select-none animate-in fade-in duration-300">
           
-          {/* Top Bar: Song Title, Section Pill & Slide Counter */}
+          {/* Top Bar: Song Title, Section Pill with Multiplier & Slide Counter */}
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-3">
                 {title}
-                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest font-mono">
-                  {slides[activeSlideIndex]?.title || 'Letra'}
-                </span>
+                {(() => {
+                  const fullTitle = slides[activeSlideIndex]?.title || 'Letra';
+                  const match = fullTitle.match(/^(.*?)\s*(x\d+|\(x\d+\))$/i);
+                  const mainTitle = match ? match[1] : fullTitle;
+                  const repeatTag = match ? match[2].replace(/[()]/g, '') : null;
+
+                  return (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest font-mono">
+                        {mainTitle}
+                      </span>
+                      {repeatTag && (
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest font-mono animate-pulse">
+                          {repeatTag}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })()}
               </h2>
               <p className="text-xs text-slate-400 font-medium">{artist}</p>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* Toggle Chords in TV Mode Button */}
+              <button
+                onClick={() => setShowChordsInTvMode(!showChordsInTvMode)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold text-xs transition border cursor-pointer ${
+                  showChordsInTvMode
+                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
+                    : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                }`}
+                title="Mostrar u ocultar acordes en Modo TV"
+              >
+                <Music className="w-4 h-4" />
+                <span>{showChordsInTvMode ? 'Acordes ON' : 'Solo Letra'}</span>
+              </button>
+
               <span className="text-sm font-mono font-bold text-slate-300 bg-slate-900 px-3 py-1 rounded-xl border border-slate-800">
                 {activeSlideIndex + 1} / {slides.length}
               </span>
@@ -264,7 +298,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             </div>
           </div>
 
-          {/* Main Slide Lyrics Display (Pure Lyrics, Dynamic Scaling & Smooth Cross-Fade) */}
+          {/* Main Slide Display (Pure Lyrics OR Lyrics with Chords) */}
           <div 
             ref={slideContainerRef}
             className="my-auto max-w-6xl mx-auto w-full text-center py-4 sm:py-8 overflow-hidden flex flex-col justify-center items-center flex-grow"
@@ -277,14 +311,87 @@ export const SongViewer: React.FC<SongViewerProps> = ({
               } ${getSlideFontClass(slides[activeSlideIndex]?.lines.length || 0)}`}
               style={{ zoom: fontScale }}
             >
-              {slides[activeSlideIndex]?.lines.map((lyricLine, lIdx) => (
-                <p 
-                  key={lIdx} 
-                  className="font-extrabold tracking-wide text-slate-100 font-sans text-balance drop-shadow-md"
-                >
-                  {lyricLine}
-                </p>
-              ))}
+              {showChordsInTvMode ? (
+                /* TV Mode WITH Transposed Chords */
+                <div className="space-y-4 sm:space-y-6">
+                  {parseSongText(
+                    (slides[activeSlideIndex]?.rawLines || []).join('\n'),
+                    semitones,
+                    preferFlats
+                  ).map((line, lIdx) => {
+                    if (line.isSectionHeader) return null;
+
+                    const isInstrumental = line.segments.length > 0 && line.segments.every((s) => s.chord && s.text.trim() === '');
+
+                    if (isInstrumental) {
+                      return (
+                        <div key={lIdx} className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 py-2">
+                          {line.segments.map((seg, sIdx) => (
+                            <span
+                              key={sIdx}
+                              className="px-3.5 py-1.5 rounded-xl font-extrabold text-emerald-400 bg-emerald-950/90 border border-emerald-500/50 font-chord text-lg sm:text-2xl shadow-lg"
+                            >
+                              {seg.chord}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={lIdx} className="flex flex-wrap items-end justify-center my-1 sm:my-2">
+                        {line.segments.map((seg, sIdx) => {
+                          const hasTrailingSpace = /\s$/.test(seg.text) || seg.text === '' || seg.text === ' ';
+                          const marginClass = hasTrailingSpace ? 'mr-2 sm:mr-3' : 'mr-0.5';
+
+                          return (
+                            <div key={sIdx} className={`inline-flex flex-col items-start leading-tight min-w-max ${marginClass}`}>
+                              {/* Chord above lyric in TV mode */}
+                              <div className="h-7 sm:h-9 flex items-center mb-1 min-w-full justify-start">
+                                {seg.chord ? (
+                                  <span className="px-2 py-0.5 rounded-lg font-extrabold text-emerald-400 bg-emerald-950/90 border border-emerald-500/50 font-chord text-[0.75em] sm:text-[0.85em] shadow-md whitespace-nowrap">
+                                    {seg.chord}
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {/* Lyric text below chord */}
+                              <span className="whitespace-pre-wrap text-slate-100 font-extrabold font-sans tracking-wide">
+                                {seg.text}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* TV Mode PURE LYRICS (Without Chords) */
+                slides[activeSlideIndex]?.lines.map((lyricLine, lIdx) => (
+                  <p 
+                    key={lIdx} 
+                    className="font-extrabold tracking-wide text-slate-100 font-sans text-balance drop-shadow-md my-2"
+                  >
+                    {lyricLine}
+                  </p>
+                ))
+              )}
+
+              {/* Repeat Multiplier Badge below lyrics if section has x2, x4 etc. */}
+              {(() => {
+                const fullTitle = slides[activeSlideIndex]?.title || '';
+                const match = fullTitle.match(/x\d+/i);
+                if (!match) return null;
+                const multiplier = match[0].toLowerCase();
+
+                return (
+                  <div className="mt-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm sm:text-base font-bold tracking-wider font-mono shadow-lg">
+                    <span className="opacity-80">🔁 Repetir</span>
+                    <span className="text-amber-400 text-lg font-black">{multiplier}</span>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
