@@ -72,7 +72,7 @@ const imageURL = new URL(image, 'https://acordex.vercel.app').href;
     </div>
 
     {/* Navigation Header */}
-    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30 no-print">
+    <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 no-print">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Logo */}
@@ -85,34 +85,39 @@ const imageURL = new URL(image, 'https://acordex.vercel.app').href;
             </svg>
           </div>
           <div>
-            <span class="text-lg sm:text-xl font-extrabold tracking-tight text-white group-hover:text-emerald-400 transition">
-              Acordex
+            <span class="text-lg sm:text-xl font-extrabold tracking-tight text-white group-hover:text-emerald-400 transition flex items-center gap-1.5 font-sans">
+              Acordex <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v1.0</span>
             </span>
-            <span class="hidden sm:block text-[10px] text-slate-400 font-mono tracking-wider uppercase">Cancionero de Adrián Pisabarro García</span>
+            <span class="hidden sm:block text-[10px] text-slate-400 font-mono tracking-wider uppercase -mt-0.5">Cancionero de Adrián Pisabarro García</span>
           </div>
         </a>
 
         {/* Header Links */}
-        <nav class="flex items-center gap-1.5 sm:gap-3 text-xs sm:text-sm font-medium">
+        <nav class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium">
           <a 
             href="/" 
-            class="text-slate-300 hover:text-emerald-400 font-semibold transition px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl hover:bg-slate-800/60"
+            class="flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-extrabold px-3.5 sm:px-4.5 py-2 rounded-xl shadow-lg shadow-emerald-500/25 hover:from-emerald-400 hover:to-emerald-300 transition transform hover:scale-105"
           >
-            Canciones
+            <svg class="w-4 h-4 stroke-current stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <span>Buscar Canciones</span>
           </a>
+
           <a 
             href="/importar-ia" 
-            class="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-bold transition px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 shadow-sm"
+            class="flex items-center gap-1.5 text-slate-300 hover:text-white font-semibold transition px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60"
           >
             <span>Importar con IA</span>
-            <span class="text-[10px] sm:text-xs">✨</span>
+            <span class="text-amber-400">✨</span>
           </a>
         </nav>
       </div>
     </header>
 
     {/* Main Page Slot */}
-    <div class="flex-grow relative z-40">
+    <div class="flex-grow relative z-10">
       <slot />
     </div>
 
