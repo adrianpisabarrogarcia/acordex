@@ -62,11 +62,14 @@ export function parseSongText(rawText: string, semitones = 0, preferFlats = fals
   return lines.map((line) => {
     const trimmed = line.trim();
 
-    // Check if line is a section header like [Verso 1], [Estribillo], [Intro], [Puente]
-    if (/^\[(verso|estribillo|intro|coro|puente|outro|solo|letra|estrofa)/i.test(trimmed)) {
+    // Check if line is a section header like [Verso 1], [Estribillo], [Intro], [Versos 2, 3, 4] [x4]
+    const isSectionHeaderLine = /^\[\s*(verso|estribillo|intro|coro|puente|outro|solo|sólo|letra|estrofa|pre-coro|pre-estribillo|versos)/i.test(trimmed);
+
+    if (isSectionHeaderLine) {
+      const cleanHeader = trimmed.replace(/^\[/, '').replace(/\]$/, '').replace(/\]\s*\[/g, ' ');
       return {
         isSectionHeader: true,
-        segments: [{ text: trimmed.replace(/^\[|\]$/g, '') }],
+        segments: [{ text: cleanHeader }],
       };
     }
 

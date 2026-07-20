@@ -126,16 +126,15 @@ export const SongViewer: React.FC<SongViewerProps> = ({
         return;
       }
 
-      // Detect section headers like [Verso 1] or [Estribillo]
-      const headerMatch = trimmed.match(/^\[(.*?)\]$/);
-      const isChordSequence = trimmed.includes('[') && trimmed.split(']').every(part => !part.trim() || part.trim().startsWith('['));
+      // Detect section headers like [Verso 1], [Estribillo], [Versos 2, 3, 4] [x4]
+      const isHeaderLine = /^\[\s*(verso|estribillo|intro|coro|puente|outro|solo|sólo|letra|estrofa|pre-coro|pre-estribillo|versos)/i.test(trimmed);
 
-      if (headerMatch && !isChordSequence) {
+      if (isHeaderLine) {
         if (currentLines.length > 0) {
           result.push({ title: currentTitle, lines: currentLines });
           currentLines = [];
         }
-        currentTitle = headerMatch[1];
+        currentTitle = trimmed.replace(/^\[/, '').replace(/\]$/, '').replace(/\]\s*\[/g, ' ');
         return;
       }
 
@@ -621,13 +620,13 @@ export const SongViewer: React.FC<SongViewerProps> = ({
                       const marginClass = hasTrailingSpace ? 'mr-1 sm:mr-1.5' : 'mr-0';
 
                       return (
-                        <div key={sIdx} className={`inline-flex flex-col items-start leading-tight ${marginClass}`}>
+                        <div key={sIdx} className={`inline-flex flex-col items-start leading-tight min-w-max ${marginClass}`}>
                           {/* Chord row above lyrics */}
-                          <div className="h-6 sm:h-7 flex items-center mb-0.5 sm:mb-1">
+                          <div className="h-6 sm:h-7 flex items-center mb-0.5 sm:mb-1 min-w-full">
                             {seg.chord ? (
                               <button
                                 onClick={() => setSelectedChord(seg.chord!)}
-                                className="px-1.5 py-0.5 rounded font-extrabold text-emerald-400 hover:text-white bg-emerald-950/80 hover:bg-emerald-500 border border-emerald-500/50 transition-all cursor-pointer font-chord text-[0.82em] sm:text-[0.85em] shadow-sm chord-chip-print active:scale-95"
+                                className="px-1.5 py-0.5 rounded font-extrabold text-emerald-400 hover:text-white bg-emerald-950/80 hover:bg-emerald-500 border border-emerald-500/50 transition-all cursor-pointer font-chord text-[0.82em] sm:text-[0.85em] shadow-sm chord-chip-print active:scale-95 whitespace-nowrap shrink-0"
                                 title={`Ver acorde ${seg.chord}`}
                               >
                                 {seg.chord}

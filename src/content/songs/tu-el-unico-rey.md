@@ -12,53 +12,50 @@ youtubeUrl: "https://www.youtube.com/watch?v=yKBmiT4cdK0"
 ---
 
 [Intro]
-[G]  [Em7]  [Cadd9]  [D]
+[G] [Em7] [Cadd9] [D]
 
-[Verso 1]
-[G]Tú, el Único [Em7]Rey que tiene que rein[Cadd9]ar
+[Estribillo]
+[G]Tú, el Único [Em7]Rey que tiene que r[Cadd9]einar
 El Único Se[D]ñor al que voy a alab[G]ar
 Hoy levanto el cora[Em7]zón
 Al que lo conquist[Cadd9]ó
 Simple[G]mente porque [D]Tú eres Di[G]os
 
-[Verso 2]
-[G]Quiero ponerte por encima de todo
-[Em7]En cada momento sentarte en el trono
-[G]Que tu alabanza es[Cadd9]té siempre en mi boca
-[Em7]Y recono[D]cer que Tú eres Dios
-
-[Estribillo]
-[Cadd9]Y a [G/B]Ti, toda la ala[Am7]banza
-Todo el poder y el ho[D]nor [Dsus4]
-Toda la gloria al Se[Cadd9]ñor
-Y a [G/B]Ti, toda la ala[Am7]banza
-Todo el poder y el ho[Dsus4]nor [D]
-Toda la gloria al Se[Cadd9]ñor
-Y a [G/B]Ti, toda la ala[Am7]banza
-Todo el poder y el ho[Dsus4]nor [D]
-Toda la gloria al Se[Cadd9]ñor
-Y a [G/B]Ti, toda la ala[Am7]banza
-Todo el poder y el ho[Dsus4]nor [D]
-Toda la gloria al Se[Cadd9]ñor
+[Verso 1]
+Quiero po[G]nerte por encima de t[Cadd9]odo
+En cada mo[Em7]mento sentarte en el t[D]rono
+Que tu ala[G]banza 
+esté siempre en mi [Cadd9]boca
+Y recon[Em7]ocer que Tú eres D[D]ios
 
 [Puente]
-Que ala[D]barte a Ti, Se[Em7]ñor
-[G]Sea siempre lo pri[Cmaj7]mero
-Fijo mi mi[Dsus4]rada en el cie[D]lo
+Que ala[Cadd9]barte a Ti, Se[D]ñor
+Sea si[Em7]empre lo pri[G]mero
+[Cadd9]Fijo mi mirada en el [Dsus4]cielo[D]
 
-[Verso 3]
-[G]Tú, el Único Rey que tiene que rei[Em7]nar
-El Único Señor al que voy a ala[Cadd9]bar
-Hoy levanto el corazón al que lo conquis[D]tó [G]
-Simplemente porque Tú eres Dios
+[Estribillo]
+[G]Tú, el Único [Em7]Rey que tiene que r[Cadd9]einar
+El Único Se[D]ñor al que voy a alab[G]ar
+Hoy levanto el cora[Em7]zón
+Al que lo conquist[Cadd9]ó
+Simple[G]mente porque [D]Tú eres Di[G]os
 
-[Verso 4]
-[G]Tú, el Único Rey que [Cadd9]tiene que reinar
-[Em7]El Único Señor al que voy a ala[Dsus4]bar
-[Em7]Hoy levanto el cora[Cadd9]zón al que lo conquistó
-[G]Simplemente [D]porque Tú eres [Cadd9]Dios
-Simple[Em7]mente [D]porque Tú eres [Cadd9]Dios
-[G]Simplemente porque Tú eres Dios
+[Sólo]
+[Cadd9] [G] [Am7] [Dsus4] [D]
+
+[Versos 2, 3, 4] [x4]
+Y a [Cadd9]Ti, toda la ala[G]banza
+Todo el p[Am7]oder y el ho[D]nor
+Toda la g[Dsus4]loria al Señ[D]or
+
+[Estribillo]
+[G]Tú, el Único [Em7]Rey que tiene que r[Cadd9]einar
+El Único Se[D]ñor al que voy a alab[G]ar
+Hoy levanto el cora[Em7]zón
+Al que lo conquist[Cadd9]ó
+[Em7]   Simple[G]mente porque [D]Tú eres Di[G]os
+
 
 [Outro]
+[Em7]   Simple[G]mente porque [D]Tú eres Di[G]os
 [Em7]  [Cadd9]  [G]  [Am7]  [Dsus4]  [D]  [G]
