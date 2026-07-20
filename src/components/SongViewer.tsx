@@ -15,7 +15,11 @@ import {
   Music, 
   Maximize2, 
   Info,
-  Sparkles
+  Sparkles,
+  Tv,
+  ChevronLeft,
+  ChevronRight,
+  X
 } from 'lucide-react';
 
 interface SongViewerProps {
@@ -31,6 +35,19 @@ interface SongViewerProps {
 }
 
 const FLAT_KEYS = ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Dm', 'Gm', 'Cm', 'Fm', 'Bbm', 'Ebm'];
+
+interface Slide {
+  title: string;
+  lines: string[];
+}
+
+const getSlideFontClass = (count: number) => {
+  if (count <= 3) return 'text-3xl sm:text-5xl md:text-6xl space-y-4 sm:space-y-6';
+  if (count <= 5) return 'text-2xl sm:text-4xl md:text-5xl space-y-3 sm:space-y-5';
+  if (count <= 7) return 'text-xl sm:text-3xl md:text-4xl space-y-2 sm:space-y-4';
+  if (count <= 9) return 'text-lg sm:text-2xl md:text-3xl space-y-2 sm:space-y-3';
+  return 'text-base sm:text-xl md:text-2xl space-y-1.5 sm:space-y-2';
+};
 
 export const SongViewer: React.FC<SongViewerProps> = ({
   title,
@@ -54,8 +71,125 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   // UI Customization
   const [fontSize, setFontSize] = useState(17); // px default for mobile readability
   const [stageMode, setStageMode] = useState(false);
+  const [projectorMode, setProjectorMode] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [fadeState, setFadeState] = useState<'in' | 'out'>('in');
+  const [fontScale, setFontScale] = useState(1);
   const [showMetronome, setShowMetronome] = useState(false);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
+
+  const slideContainerRef = useRef<HTMLDivElement>(null);
+
+  // Smooth slide cross-fade transition
+  useEffect(() => {
+    if (slideIndex === activeSlideIndex) return;
+    setFadeState('out');
+
+    const timer = setTimeout(() => {
+      setActiveSlideIndex(slideIndex);
+      setFadeState('in');
+    }, 160);
+
+    return () => clearTimeout(timer);
+  }, [slideIndex, activeSlideIndex]);
+
+  // Reset font scale on slide change
+  useEffect(() => {
+    if (!projectorMode) return;
+    setFontScale(1);
+  }, [slideIndex, projectorMode]);
+
+  // Auto-fit overflow check
+  useEffect(() => {
+    if (!projectorMode || !slideContainerRef.current) return;
+    const container = slideContainerRef.current;
+    if (container.scrollHeight > container.clientHeight && fontScale > 0.5) {
+      setFontScale((prev) => Math.max(0.5, prev - 0.08));
+    }
+  }, [slideIndex, projectorMode, fontScale]);
+
+  // Parse pure lyrics grouped into slides for TV Presentation Mode (without chords)
+  const slides: Slide[] = React.useMemo(() => {
+    const rawLines = rawContent.split('\n');
+    const result: Slide[] = [];
+    let currentTitle = 'Letra';
+    let currentLines: string[] = [];
+
+    rawLines.forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        if (currentLines.length > 0) {
+          result.push({ title: currentTitle, lines: currentLines });
+          currentLines = [];
+        }
+        return;
+      }
+
+      // Detect section headers like [Verso 1] or [Estribillo]
+      const headerMatch = trimmed.match(/^\[(.*?)\]$/);
+      const isChordSequence = trimmed.includes('[') && trimmed.split(']').every(part => !part.trim() || part.trim().startsWith('['));
+
+      if (headerMatch && !isChordSequence) {
+        if (currentLines.length > 0) {
+          result.push({ title: currentTitle, lines: currentLines });
+          currentLines = [];
+        }
+        currentTitle = headerMatch[1];
+        return;
+      }
+
+      // Strip bracketed chords [G], [Em7] etc. to leave pure lyrics
+      const pureLyrics = trimmed.replace(/\[[^\]]+\]/g, '').replace(/\s+/g, ' ').trim();
+      if (pureLyrics) {
+        currentLines.push(pureLyrics);
+      }
+    });
+
+    if (currentLines.length > 0) {
+      result.push({ title: currentTitle, lines: currentLines });
+    }
+
+    return result.filter((s) => s.lines.length > 0);
+  }, [rawContent]);
+
+  const toggleProjectorMode = () => {
+    if (!projectorMode) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      setSlideIndex(0);
+      setProjectorMode(true);
+    } else {
+      if (document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setProjectorMode(false);
+    }
+  };
+
+  // Keyboard navigation for TV Slide Presentation mode (ArrowLeft, ArrowRight, Space, PageUp, PageDown)
+  useEffect(() => {
+    if (!projectorMode) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        setSlideIndex((prev) => Math.min(slides.length - 1, prev + 1));
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        setSlideIndex((prev) => Math.max(0, prev - 1));
+      } else if (e.key === 'Escape') {
+        if (document.exitFullscreen && document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        setProjectorMode(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [projectorMode, slides.length]);
 
   // 1. Sounding key calculation (the real audio pitch coming out of the guitar)
   const preferFlats = FLAT_KEYS.includes(originalKey);
@@ -101,344 +235,438 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   return (
     <div className={`min-h-screen transition-colors duration-300 ${stageMode ? 'bg-black text-amber-100' : 'bg-slate-950 text-slate-100'}`}>
       
-      {/* Top Floating Control Toolbar (Responsive & Swipeable on Mobile) */}
-      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-2xl px-3 sm:px-4 py-2.5 no-print">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+      {/* Fullscreen TV Slide Presentation Mode (Pure Lyrics, No Chords, Arrow Key Controlled) */}
+      {projectorMode ? (
+        <div className="fixed inset-0 z-[9999] bg-black text-white flex flex-col justify-between p-6 sm:p-12 select-none animate-in fade-in duration-300">
           
-          {/* Song Info summary */}
-          <div className="flex items-center justify-between">
+          {/* Top Bar: Song Title, Section Pill & Slide Counter */}
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
             <div>
-              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                <span className="truncate max-w-[200px] sm:max-w-none">{title}</span>
-                <span className="shrink-0 text-[11px] sm:text-xs font-normal px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
-                  Tono: {soundingKey}
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-3">
+                {title}
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest font-mono">
+                  {slides[activeSlideIndex]?.title || 'Letra'}
                 </span>
-              </h1>
-              <p className="text-xs text-slate-400 font-medium truncate">{artist}</p>
+              </h2>
+              <p className="text-xs text-slate-400 font-medium">{artist}</p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-mono font-bold text-slate-300 bg-slate-900 px-3 py-1 rounded-xl border border-slate-800">
+                {activeSlideIndex + 1} / {slides.length}
+              </span>
+              <button
+                onClick={toggleProjectorMode}
+                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition"
+                title="Salir del Modo TV (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
-          {/* Interactive Toolbars (Horizontal Touch Scroll on Mobile) */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs">
-            
-            {/* Transposer Group */}
-            <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60 shadow-inner">
-              <span className="text-[11px] text-slate-400 font-medium px-1.5 flex items-center gap-1">
-                <Music className="w-3.5 h-3.5 text-emerald-400" /> Tono
-              </span>
-              <button
-                onClick={() => setSemitones((s) => s - 1)}
-                className="px-2.5 py-1 font-bold bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition active:scale-95"
-                title="Bajar 1 semitono"
-              >
-                -1
-              </button>
-              <span className="w-7 text-center font-mono font-bold text-emerald-400">
-                {semitones > 0 ? `+${semitones}` : semitones}
-              </span>
-              <button
-                onClick={() => setSemitones((s) => s + 1)}
-                className="px-2.5 py-1 font-bold bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition active:scale-95"
-                title="Subir 1 semitono"
-              >
-                +1
-              </button>
-            </div>
-
-            {/* Capo Selector */}
-            <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60">
-              <span className="text-[11px] text-slate-400 font-medium px-1.5">Cejilla</span>
-              <select
-                value={capo}
-                onChange={(e) => setCapo(Number(e.target.value))}
-                className="bg-slate-900 text-amber-400 font-bold rounded-lg px-2 py-1 border border-slate-700 outline-none cursor-pointer"
-              >
-                <option value={0}>Sin capo</option>
-                <option value={1}>Traste 1</option>
-                <option value={2}>Traste 2</option>
-                <option value={3}>Traste 3</option>
-                <option value={4}>Traste 4</option>
-                <option value={5}>Traste 5</option>
-                <option value={6}>Traste 6</option>
-                <option value={7}>Traste 7</option>
-              </select>
-            </div>
-
-            {/* Reset button if modified */}
-            {isCustomized && (
-              <button
-                onClick={resetKeyAndCapo}
-                className="shrink-0 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold flex items-center gap-1 transition"
-                title="Restablecer tono y cejilla originales"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-            )}
-
-            {/* Auto-scroll controls */}
-            <div className="flex items-center shrink-0 gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700/60">
-              <button
-                onClick={() => setIsScrolling(!isScrolling)}
-                className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition ${
-                  isScrolling
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 animate-pulse'
-                    : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
-                }`}
-              >
-                {isScrolling ? (
-                  <>
-                    <Pause className="w-3.5 h-3.5 fill-current" /> Pausa
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5 fill-current" /> Scroll
-                  </>
-                )}
-              </button>
-
-              <select
-                value={scrollSpeed}
-                onChange={(e) => setScrollSpeed(Number(e.target.value))}
-                className="bg-slate-900 text-slate-200 rounded-lg px-1.5 py-1 border border-slate-700 outline-none cursor-pointer font-mono"
-              >
-                <option value={1}>1x</option>
-                <option value={2}>2x</option>
-                <option value={3}>3x</option>
-                <option value={5}>5x</option>
-              </select>
-            </div>
-
-            {/* Font Size controls */}
-            <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60">
-              <button
-                onClick={() => setFontSize((f) => Math.max(13, f - 1))}
-                className="px-2 py-0.5 text-slate-300 hover:text-white rounded font-bold"
-                title="Disminuir texto"
-              >
-                A-
-              </button>
-              <span className="font-mono text-slate-300 px-1">{fontSize}</span>
-              <button
-                onClick={() => setFontSize((f) => Math.min(26, f + 1))}
-                className="px-2 py-0.5 text-slate-300 hover:text-white rounded font-bold"
-                title="Aumentar texto"
-              >
-                A+
-              </button>
-            </div>
-
-            {/* Metronome Toggle */}
-            <button
-              onClick={() => setShowMetronome(!showMetronome)}
-              className={`p-2 rounded-xl shrink-0 border transition ${
-                showMetronome
-                  ? 'bg-indigo-600 text-white border-indigo-500'
-                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-              }`}
-              title="Metrónomo"
+          {/* Main Slide Lyrics Display (Pure Lyrics, Dynamic Scaling & Smooth Cross-Fade) */}
+          <div 
+            ref={slideContainerRef}
+            className="my-auto max-w-6xl mx-auto w-full text-center py-4 sm:py-8 overflow-hidden flex flex-col justify-center items-center flex-grow"
+          >
+            <div 
+              className={`w-full transition-all duration-300 ease-out transform ${
+                fadeState === 'in'
+                  ? 'opacity-100 translate-y-0 scale-100'
+                  : 'opacity-0 translate-y-3 scale-[0.98]'
+              } ${getSlideFontClass(slides[activeSlideIndex]?.lines.length || 0)}`}
+              style={{ zoom: fontScale }}
             >
-              <Volume2 className="w-4 h-4" />
-            </button>
-
-            {/* Stage Mode Toggle */}
-            <button
-              onClick={() => setStageMode(!stageMode)}
-              className={`p-2 rounded-xl shrink-0 border transition ${
-                stageMode
-                  ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
-                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-              }`}
-              title="Modo Escenario"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-
-            {/* Print Button */}
-            <button
-              onClick={() => window.print()}
-              className="p-2 rounded-xl shrink-0 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
-              title="Imprimir o exportar PDF"
-            >
-              <Printer className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
-
-        {/* Metronome Floating Box if opened */}
-        {showMetronome && (
-          <div className="flex justify-center mb-4 animate-in slide-in-from-top duration-300">
-            <Metronome initialBpm={tempo} />
-          </div>
-        )}
-
-        {/* Metadata Banner: Key, Capo, Rhythm, Tempo */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 no-print shadow-xl">
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs">
-            <div className="flex items-center gap-1.5 text-slate-300">
-              <span className="text-slate-500 font-semibold">Tono:</span>
-              <span className="font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 font-mono">
-                {soundingKey}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-slate-300">
-              <span className="text-slate-500 font-semibold">Cejilla:</span>
-              <span className="font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60">
-                {capo > 0 ? `Traste ${capo}` : 'Sin cejilla'}
-              </span>
-            </div>
-
-            {tempo && (
-              <div className="flex items-center gap-1.5 text-slate-300">
-                <span className="text-slate-500 font-semibold">Tempo:</span>
-                <span className="font-bold text-indigo-400 bg-indigo-950/60 px-2.5 py-0.5 rounded border border-indigo-800/60 font-mono">
-                  {tempo} BPM
-                </span>
-              </div>
-            )}
-
-            {strumming && (
-              <div className="flex items-center gap-1.5 text-slate-300">
-                <span className="text-slate-500 font-semibold">Rasgueo:</span>
-                <span className="font-bold text-slate-200 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700 font-mono">
-                  {strumming}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="text-[11px] text-slate-400 flex items-center gap-1">
-            <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>Pulsa cualquier acorde para ver los trastes</span>
-          </div>
-        </div>
-
-        {/* Chords Bar (Clickable chords chips for quick reference) */}
-        {uniqueChords.length > 0 && (
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3 flex flex-wrap items-center gap-2 no-print">
-            <span className="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Acordes:
-            </span>
-            {uniqueChords.map((chord) => (
-              <button
-                key={chord}
-                onClick={() => setSelectedChord(chord)}
-                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 font-chord font-bold text-xs transition active:scale-95 cursor-pointer"
-              >
-                {chord}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Printable Header (Visible only in print / PDF export) */}
-        <div className="hidden print-only mb-4 text-black border-b border-black pb-3 font-sans">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-black text-black tracking-tight">{title}</h1>
-              <p className="text-sm font-semibold text-slate-800">{artist}</p>
-            </div>
-            <div className="text-right text-xs font-mono text-slate-900 space-y-0.5">
-              <p><span className="font-bold">Tono real:</span> {soundingKey} {capo > 0 ? `| Capo: ${capo}` : ''}</p>
-              {tempo && <p><span className="font-bold">Tempo:</span> {tempo} BPM ({timeSignature})</p>}
-              {strumming && <p><span className="font-bold">Rasgueo:</span> {strumming}</p>}
-            </div>
-          </div>
-        </div>
-
-        {/* Lyric Sheet with Chords Positioned ABOVE Lyrics */}
-        <div 
-          className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-8 md:p-10 shadow-2xl font-chord leading-relaxed space-y-3 select-text print-container overflow-x-auto"
-          style={{ fontSize: `${fontSize}px` }}
-        >
-          {parsedLines.map((line, idx) => {
-            if (line.isSectionHeader) {
-              return (
-                <div
-                  key={idx}
-                  className="pt-4 sm:pt-6 pb-1.5 sm:pb-2 text-emerald-400 font-bold text-xs uppercase tracking-widest border-b border-slate-800/80 font-sans flex items-center gap-2 print-section-header"
+              {slides[activeSlideIndex]?.lines.map((lyricLine, lIdx) => (
+                <p 
+                  key={lIdx} 
+                  className="font-extrabold tracking-wide text-slate-100 font-sans text-balance drop-shadow-md"
                 >
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50 no-print" />
-                  {line.segments[0]?.text}
+                  {lyricLine}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom Bar: Touch & Keyboard Navigation Controls */}
+          <div className="flex items-center justify-between border-t border-slate-800/80 pt-4">
+            <button
+              disabled={slideIndex === 0}
+              onClick={() => setSlideIndex((prev) => Math.max(0, prev - 1))}
+              className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none text-emerald-400 font-bold border border-slate-800 flex items-center gap-2 transition active:scale-95 text-sm"
+            >
+              <ChevronLeft className="w-5 h-5" /> Anterior
+            </button>
+
+            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <span className="px-2 py-1 bg-slate-900 rounded border border-slate-800">←</span>
+              <span className="px-2 py-1 bg-slate-900 rounded border border-slate-800">→</span>
+              <span>o Espacio para cambiar diapositiva</span>
+            </div>
+
+            <button
+              disabled={slideIndex === slides.length - 1}
+              onClick={() => setSlideIndex((prev) => Math.min(slides.length - 1, prev + 1))}
+              className="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 disabled:opacity-30 disabled:pointer-events-none font-extrabold border border-emerald-400 flex items-center gap-2 transition active:scale-95 shadow-lg shadow-emerald-500/20 text-sm"
+            >
+              Siguiente <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+        </div>
+      ) : (
+        <>
+          {/* Top Floating Control Toolbar (Responsive & Swipeable on Mobile) */}
+          <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-2xl px-3 sm:px-4 py-2.5 no-print">
+            <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+              
+              {/* Song Info summary */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                    <span className="truncate max-w-[200px] sm:max-w-none">{title}</span>
+                    <span className="shrink-0 text-[11px] sm:text-xs font-normal px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
+                      Tono: {soundingKey}
+                    </span>
+                  </h1>
+                  <p className="text-xs text-slate-400 font-medium truncate">{artist}</p>
                 </div>
-              );
-            }
+              </div>
 
-            // Detect if line is purely an instrumental / chord sequence line (like Intro / Solo / Outro)
-            const isInstrumental = line.segments.length > 0 && line.segments.every((s) => s.chord && s.text.trim() === '');
-
-            if (isInstrumental) {
-              return (
-                <div key={idx} className="flex flex-wrap items-center gap-2 sm:gap-4 py-2 my-1 line-row">
-                  {line.segments.map((seg, sIdx) => (
-                    <button
-                      key={sIdx}
-                      onClick={() => setSelectedChord(seg.chord!)}
-                      className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-xl font-extrabold text-emerald-400 hover:text-slate-950 bg-emerald-950/90 hover:bg-emerald-400 border border-emerald-500/50 transition-all cursor-pointer font-chord text-xs sm:text-sm shadow-md chord-chip-print active:scale-95"
-                      title={`Ver acorde ${seg.chord}`}
-                    >
-                      {seg.chord}
-                    </button>
-                  ))}
+              {/* Interactive Toolbars (Horizontal Touch Scroll on Mobile) */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs">
+                
+                {/* Transposer Group */}
+                <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60 shadow-inner">
+                  <span className="text-[11px] text-slate-400 font-medium px-1.5 flex items-center gap-1">
+                    <Music className="w-3.5 h-3.5 text-emerald-400" /> Tono
+                  </span>
+                  <button
+                    onClick={() => setSemitones((s) => s - 1)}
+                    className="px-2.5 py-1 font-bold bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition active:scale-95"
+                    title="Bajar 1 semitono"
+                  >
+                    -1
+                  </button>
+                  <span className="w-7 text-center font-mono font-bold text-emerald-400">
+                    {semitones > 0 ? `+${semitones}` : semitones}
+                  </span>
+                  <button
+                    onClick={() => setSemitones((s) => s + 1)}
+                    className="px-2.5 py-1 font-bold bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition active:scale-95"
+                    title="Subir 1 semitono"
+                  >
+                    +1
+                  </button>
                 </div>
-              );
-            }
 
-            return (
-              <div key={idx} className="line-row flex flex-wrap items-end my-1 sm:my-2">
-                {line.segments.map((seg, sIdx) => {
-                  const hasTrailingSpace = /\s$/.test(seg.text) || seg.text === '' || seg.text === ' ';
-                  const marginClass = hasTrailingSpace ? 'mr-1 sm:mr-1.5' : 'mr-0';
+                {/* Capo Selector */}
+                <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60">
+                  <span className="text-[11px] text-slate-400 font-medium px-1.5">Cejilla</span>
+                  <select
+                    value={capo}
+                    onChange={(e) => setCapo(Number(e.target.value))}
+                    className="bg-slate-900 text-amber-400 font-bold rounded-lg px-2 py-1 border border-slate-700 outline-none cursor-pointer"
+                  >
+                    <option value={0}>Sin capo</option>
+                    <option value={1}>Traste 1</option>
+                    <option value={2}>Traste 2</option>
+                    <option value={3}>Traste 3</option>
+                    <option value={4}>Traste 4</option>
+                    <option value={5}>Traste 5</option>
+                    <option value={6}>Traste 6</option>
+                    <option value={7}>Traste 7</option>
+                  </select>
+                </div>
 
+                {/* Reset button if modified */}
+                {isCustomized && (
+                  <button
+                    onClick={resetKeyAndCapo}
+                    className="shrink-0 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold flex items-center gap-1 transition"
+                    title="Restablecer tono y cejilla originales"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                {/* Auto-scroll controls */}
+                <div className="flex items-center shrink-0 gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700/60">
+                  <button
+                    onClick={() => setIsScrolling(!isScrolling)}
+                    className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition ${
+                      isScrolling
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 animate-pulse'
+                        : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                    }`}
+                  >
+                    {isScrolling ? (
+                      <>
+                        <Pause className="w-3.5 h-3.5 fill-current" /> Pausa
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5 fill-current" /> Scroll
+                      </>
+                    )}
+                  </button>
+
+                  <select
+                    value={scrollSpeed}
+                    onChange={(e) => setScrollSpeed(Number(e.target.value))}
+                    className="bg-slate-900 text-slate-200 rounded-lg px-1.5 py-1 border border-slate-700 outline-none cursor-pointer font-mono"
+                  >
+                    <option value={1}>1x</option>
+                    <option value={2}>2x</option>
+                    <option value={3}>3x</option>
+                    <option value={5}>5x</option>
+                  </select>
+                </div>
+
+                {/* Font Size controls */}
+                <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60">
+                  <button
+                    onClick={() => setFontSize((f) => Math.max(13, f - 1))}
+                    className="px-2 py-0.5 text-slate-300 hover:text-white rounded font-bold"
+                    title="Disminuir texto"
+                  >
+                    A-
+                  </button>
+                  <span className="font-mono text-slate-300 px-1">{fontSize}</span>
+                  <button
+                    onClick={() => setFontSize((f) => Math.min(26, f + 1))}
+                    className="px-2 py-0.5 text-slate-300 hover:text-white rounded font-bold"
+                    title="Aumentar texto"
+                  >
+                    A+
+                  </button>
+                </div>
+
+                {/* Metronome Toggle */}
+                <button
+                  onClick={() => setShowMetronome(!showMetronome)}
+                  className={`p-2 rounded-xl shrink-0 border transition ${
+                    showMetronome
+                      ? 'bg-indigo-600 text-white border-indigo-500'
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                  }`}
+                  title="Metrónomo"
+                >
+                  <Volume2 className="w-4 h-4" />
+                </button>
+
+                {/* Stage Mode Toggle */}
+                <button
+                  onClick={() => setStageMode(!stageMode)}
+                  className={`p-2 rounded-xl shrink-0 border transition ${
+                    stageMode
+                      ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                  }`}
+                  title="Modo Escenario"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
+
+                {/* Proyectar / Chromecast TV Button */}
+                <button
+                  onClick={toggleProjectorMode}
+                  className="px-3 py-2 rounded-xl shrink-0 bg-emerald-500 hover:bg-emerald-400 text-slate-950 border border-emerald-400 shadow-md shadow-emerald-500/20 transition flex items-center gap-1.5 font-bold"
+                  title="Modo Proyector TV (Diapositivas sin acordes)"
+                >
+                  <Tv className="w-4 h-4 shrink-0" />
+                  <span className="text-xs">Modo TV</span>
+                </button>
+
+                {/* Print Button */}
+                <button
+                  onClick={() => window.print()}
+                  className="p-2 rounded-xl shrink-0 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                  title="Imprimir o exportar PDF"
+                >
+                  <Printer className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content Area */}
+          <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
+
+            {/* Metronome Floating Box if opened */}
+            {showMetronome && (
+              <div className="flex justify-center mb-4 animate-in slide-in-from-top duration-300">
+                <Metronome initialBpm={tempo} />
+              </div>
+            )}
+
+            {/* Metadata Banner: Key, Capo, Rhythm, Tempo */}
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 no-print shadow-xl">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs">
+                <div className="flex items-center gap-1.5 text-slate-300">
+                  <span className="text-slate-500 font-semibold">Tono:</span>
+                  <span className="font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 font-mono">
+                    {soundingKey}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-slate-300">
+                  <span className="text-slate-500 font-semibold">Cejilla:</span>
+                  <span className="font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60">
+                    {capo > 0 ? `Traste ${capo}` : 'Sin cejilla'}
+                  </span>
+                </div>
+
+                {tempo && (
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <span className="text-slate-500 font-semibold">Tempo:</span>
+                    <span className="font-bold text-indigo-400 bg-indigo-950/60 px-2.5 py-0.5 rounded border border-indigo-800/60 font-mono">
+                      {tempo} BPM
+                    </span>
+                  </div>
+                )}
+
+                {strumming && (
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <span className="text-slate-500 font-semibold">Rasgueo:</span>
+                    <span className="font-bold text-slate-200 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700 font-mono">
+                      {strumming}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Pulsa cualquier acorde para ver los trastes</span>
+              </div>
+            </div>
+
+            {/* Chords Bar (Clickable chords chips for quick reference) */}
+            {uniqueChords.length > 0 && (
+              <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3 flex flex-wrap items-center gap-2 no-print">
+                <span className="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Acordes:
+                </span>
+                {uniqueChords.map((chord) => (
+                  <button
+                    key={chord}
+                    onClick={() => setSelectedChord(chord)}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 font-chord font-bold text-xs transition active:scale-95 cursor-pointer"
+                  >
+                    {chord}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Printable Header (Visible only in print / PDF export) */}
+            <div className="hidden print-only mb-4 text-black border-b border-black pb-3 font-sans">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-2xl font-black text-black tracking-tight">{title}</h1>
+                  <p className="text-sm font-semibold text-slate-800">{artist}</p>
+                </div>
+                <div className="text-right text-xs font-mono text-slate-900 space-y-0.5">
+                  <p><span className="font-bold">Tono real:</span> {soundingKey} {capo > 0 ? `| Capo: ${capo}` : ''}</p>
+                  {tempo && <p><span className="font-bold">Tempo:</span> {tempo} BPM ({timeSignature})</p>}
+                  {strumming && <p><span className="font-bold">Rasgueo:</span> {strumming}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* Lyric Sheet with Chords Positioned ABOVE Lyrics */}
+            <div 
+              className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-8 md:p-10 shadow-2xl font-chord leading-relaxed space-y-3 select-text print-container overflow-x-auto"
+              style={{ fontSize: `${fontSize}px` }}
+            >
+              {parsedLines.map((line, idx) => {
+                if (line.isSectionHeader) {
                   return (
-                    <div key={sIdx} className={`inline-flex flex-col items-start leading-tight ${marginClass}`}>
-                      {/* Chord row above lyrics */}
-                      <div className="h-6 sm:h-7 flex items-center mb-0.5 sm:mb-1">
-                        {seg.chord ? (
-                          <button
-                            onClick={() => setSelectedChord(seg.chord!)}
-                            className="px-1.5 py-0.5 rounded font-extrabold text-emerald-400 hover:text-white bg-emerald-950/80 hover:bg-emerald-500 border border-emerald-500/50 transition-all cursor-pointer font-chord text-[0.82em] sm:text-[0.85em] shadow-sm chord-chip-print active:scale-95"
-                            title={`Ver acorde ${seg.chord}`}
-                          >
-                            {seg.chord}
-                          </button>
-                        ) : null}
-                      </div>
-
-                      {/* Lyrics text below chord */}
-                      <span className="whitespace-pre-wrap text-slate-200 font-chord lyric-text-print">
-                        {seg.text}
-                      </span>
+                    <div
+                      key={idx}
+                      className="pt-4 sm:pt-6 pb-1.5 sm:pb-2 text-emerald-400 font-bold text-xs uppercase tracking-widest border-b border-slate-800/80 font-sans flex items-center gap-2 print-section-header"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50 no-print" />
+                      {line.segments[0]?.text}
                     </div>
                   );
-                })}
-              </div>
-            );
-          })}
-        </div>
+                }
 
-        {/* Optional YouTube Video Embed */}
-        {youtubeUrl && (
-          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3.5 sm:p-4 no-print space-y-3">
-            <h3 className="text-xs sm:text-sm font-semibold text-slate-300 flex items-center gap-2">
-              <Play className="w-4 h-4 text-red-500 fill-current shrink-0" /> Vídeo / Audio original de referencia
-            </h3>
-            <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-800">
-              <iframe
-                src={youtubeUrl.replace('watch?v=', 'embed/')}
-                title={`Vídeo original de ${title}`}
-                className="w-full h-full"
-                allowFullScreen
-              />
+                // Detect if line is purely an instrumental / chord sequence line (like Intro / Solo / Outro)
+                const isInstrumental = line.segments.length > 0 && line.segments.every((s) => s.chord && s.text.trim() === '');
+
+                if (isInstrumental) {
+                  return (
+                    <div key={idx} className="flex flex-wrap items-center gap-2 sm:gap-4 py-2 my-1 line-row">
+                      {line.segments.map((seg, sIdx) => (
+                        <button
+                          key={sIdx}
+                          onClick={() => setSelectedChord(seg.chord!)}
+                          className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-xl font-extrabold text-emerald-400 hover:text-slate-950 bg-emerald-950/90 hover:bg-emerald-400 border border-emerald-500/50 transition-all cursor-pointer font-chord text-xs sm:text-sm shadow-md chord-chip-print active:scale-95"
+                          title={`Ver acorde ${seg.chord}`}
+                        >
+                          {seg.chord}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={idx} className="line-row flex flex-wrap items-end my-1 sm:my-2">
+                    {line.segments.map((seg, sIdx) => {
+                      const hasTrailingSpace = /\s$/.test(seg.text) || seg.text === '' || seg.text === ' ';
+                      const marginClass = hasTrailingSpace ? 'mr-1 sm:mr-1.5' : 'mr-0';
+
+                      return (
+                        <div key={sIdx} className={`inline-flex flex-col items-start leading-tight ${marginClass}`}>
+                          {/* Chord row above lyrics */}
+                          <div className="h-6 sm:h-7 flex items-center mb-0.5 sm:mb-1">
+                            {seg.chord ? (
+                              <button
+                                onClick={() => setSelectedChord(seg.chord!)}
+                                className="px-1.5 py-0.5 rounded font-extrabold text-emerald-400 hover:text-white bg-emerald-950/80 hover:bg-emerald-500 border border-emerald-500/50 transition-all cursor-pointer font-chord text-[0.82em] sm:text-[0.85em] shadow-sm chord-chip-print active:scale-95"
+                                title={`Ver acorde ${seg.chord}`}
+                              >
+                                {seg.chord}
+                              </button>
+                            ) : null}
+                          </div>
+
+                          {/* Lyrics text below chord */}
+                          <span className="whitespace-pre-wrap text-slate-200 font-chord lyric-text-print">
+                            {seg.text}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        )}
 
-      </main>
+            {/* Optional YouTube Video Embed */}
+            {youtubeUrl && (
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3.5 sm:p-4 no-print space-y-3">
+                <h3 className="text-xs sm:text-sm font-semibold text-slate-300 flex items-center gap-2">
+                  <Play className="w-4 h-4 text-red-500 fill-current shrink-0" /> Vídeo / Audio original de referencia
+                </h3>
+                <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-800">
+                  <iframe
+                    src={youtubeUrl.replace('watch?v=', 'embed/')}
+                    title={`Vídeo original de ${title}`}
+                    className="w-full h-full"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            )}
+
+          </main>
+        </>
+      )}
 
       {/* Chord Diagram Modal when chord clicked */}
       <ChordDiagramModal
