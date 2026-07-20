@@ -247,61 +247,65 @@ export const SongViewer: React.FC<SongViewerProps> = ({
       {/* Fullscreen TV Slide Presentation Mode (Pure Lyrics or Chords, Portal to document.body) */}
       {projectorMode && mounted ? (
         createPortal(
-          <div className="fixed inset-0 z-[99999] bg-black text-white flex flex-col justify-between p-6 sm:p-12 select-none animate-in fade-in duration-300">
+          <div className="fixed inset-0 z-[99999] bg-black text-white flex flex-col p-3 sm:p-12 select-none animate-in fade-in duration-300">
             
-            {/* Top Bar: Song Title, Section Pill with Multiplier & Slide Counter */}
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-3">
-                  {title}
+            {/* Top Bar — compact 2-row on mobile, single row on desktop */}
+            <div className="border-b border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-0">
+              {/* Row 1: title + section pill + close */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="text-sm sm:text-2xl font-black tracking-tight text-white truncate">
+                    {title}
+                  </h2>
                   {(() => {
                     const fullTitle = slides[activeSlideIndex]?.title || 'Letra';
                     const match = fullTitle.match(/^(.*?)\s*(x\d+|\(x\d+\))$/i);
                     const mainTitle = match ? match[1] : fullTitle;
                     const repeatTag = match ? match[2].replace(/[()]/g, '') : null;
-
                     return (
-                      <span className="inline-flex items-center gap-2">
-                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest font-mono">
+                      <span className="inline-flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest font-mono">
                           {mainTitle}
                         </span>
                         {repeatTag && (
-                          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest font-mono animate-pulse">
+                          <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest font-mono animate-pulse">
                             {repeatTag}
                           </span>
                         )}
                       </span>
                     );
                   })()}
-                </h2>
-                <p className="text-xs text-slate-400 font-medium">{artist}</p>
-              </div>
+                </div>
 
-              <div className="flex items-center gap-3">
-                {/* Toggle Chords in TV Mode Button */}
-                <button
-                  onClick={() => setShowChordsInTvMode(!showChordsInTvMode)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold text-xs transition border cursor-pointer ${
-                    showChordsInTvMode
-                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
-                      : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
-                  }`}
-                  title="Mostrar u ocultar acordes en Modo TV"
-                >
-                  <Music className="w-4 h-4" />
-                  <span>{showChordsInTvMode ? 'Acordes ON' : 'Solo Letra'}</span>
-                </button>
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                  {/* Toggle Chords Button — icon-only on mobile */}
+                  <button
+                    onClick={() => setShowChordsInTvMode(!showChordsInTvMode)}
+                    className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl font-bold text-xs transition border cursor-pointer ${
+                      showChordsInTvMode
+                        ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                    }`}
+                    title="Mostrar u ocultar acordes en Modo TV"
+                  >
+                    <Music className="w-4 h-4 shrink-0" />
+                    <span className="hidden sm:inline">{showChordsInTvMode ? 'Acordes ON' : 'Solo Letra'}</span>
+                  </button>
 
-                <span className="text-sm font-mono font-bold text-slate-300 bg-slate-900 px-3 py-1 rounded-xl border border-slate-800">
-                  {activeSlideIndex + 1} / {slides.length}
-                </span>
-                <button
-                  onClick={toggleProjectorMode}
-                  className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition"
-                  title="Salir del Modo TV (Esc)"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                  {/* Slide counter */}
+                  <span className="text-xs font-mono font-bold text-slate-300 bg-slate-900 px-2 sm:px-3 py-1 rounded-xl border border-slate-800 shrink-0">
+                    {activeSlideIndex + 1}/{slides.length}
+                  </span>
+
+                  {/* Close */}
+                  <button
+                    onClick={toggleProjectorMode}
+                    className="p-1.5 sm:p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition"
+                    title="Salir del Modo TV (Esc)"
+                  >
+                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -403,13 +407,14 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             </div>
 
             {/* Bottom Bar: Touch & Keyboard Navigation Controls */}
-            <div className="flex items-center justify-between border-t border-slate-800/80 pt-4">
+            <div className="flex items-center justify-between border-t border-slate-800/80 pt-3 sm:pt-4 mt-3 sm:mt-0">
               <button
                 disabled={slideIndex === 0}
                 onClick={() => setSlideIndex((prev) => Math.max(0, prev - 1))}
-                className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none text-emerald-400 font-bold border border-slate-800 flex items-center gap-2 transition active:scale-95 text-sm"
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-3 sm:py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none text-emerald-400 font-bold border border-slate-800 transition active:scale-95 text-sm"
               >
-                <ChevronLeft className="w-5 h-5" /> Anterior
+                <ChevronLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">Anterior</span>
               </button>
 
               <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono">
@@ -418,12 +423,16 @@ export const SongViewer: React.FC<SongViewerProps> = ({
                 <span>o Espacio para cambiar diapositiva</span>
               </div>
 
+              {/* Mobile: swipe hint */}
+              <p className="sm:hidden text-[10px] text-slate-600 font-mono">desliza o usa los botones</p>
+
               <button
                 disabled={slideIndex === slides.length - 1}
                 onClick={() => setSlideIndex((prev) => Math.min(slides.length - 1, prev + 1))}
-                className="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 disabled:opacity-30 disabled:pointer-events-none font-extrabold border border-emerald-400 flex items-center gap-2 transition active:scale-95 shadow-lg shadow-emerald-500/20 text-sm"
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 disabled:opacity-30 disabled:pointer-events-none font-extrabold border border-emerald-400 transition active:scale-95 shadow-lg shadow-emerald-500/20 text-sm"
               >
-                Siguiente <ChevronRight className="w-5 h-5" />
+                <span className="hidden sm:inline">Siguiente</span>
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
 
