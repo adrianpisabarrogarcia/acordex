@@ -48,14 +48,13 @@ Y a [Cadd9]Ti, toda la ala[G]banza
 Todo el p[Am7]oder y el ho[D]nor
 Toda la g[Dsus4]loria al Señ[D]or
 
-[Estribillo]
+[Estribillo] [x2]
 [G]Tú, el Único [Em7]Rey que tiene que r[Cadd9]einar
 El Único Se[D]ñor al que voy a alab[G]ar
 Hoy levanto el cora[Em7]zón
 Al que lo conquist[Cadd9]ó
-[Em7]   Simple[G]mente porque [D]Tú eres Di[G]os
+[Em7]   Simple[G]mente porque Tú eres Di[G]os
 
 
-[Outro]
-[Em7]   Simple[G]mente porque [D]Tú eres Di[G]os
-[Em7]  [Cadd9]  [G]  [Am7]  [Dsus4]  [D]  [G]
+[Outro] [x2]
+[Em7]   Simple[G]mente porque Tú eres Di[G]os
