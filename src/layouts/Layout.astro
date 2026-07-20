@@ -49,36 +49,36 @@ const { title, description = 'Acordex - Repositorio interactivo de canciones con
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Logo */}
-        <a href="/" class="flex items-center gap-2.5 group">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition duration-300">
-            <svg class="w-6 h-6 text-slate-950 stroke-current stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <a href="/" class="flex items-center gap-2 sm:gap-2.5 group">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition duration-300">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-slate-950 stroke-current stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 18V5l12-2v13" />
               <circle cx="6" cy="18" r="3" />
               <circle cx="18" cy="16" r="3" />
             </svg>
           </div>
           <div>
-            <span class="text-xl font-extrabold tracking-tight text-white group-hover:text-emerald-400 transition">
+            <span class="text-lg sm:text-xl font-extrabold tracking-tight text-white group-hover:text-emerald-400 transition">
               Acordex
             </span>
-            <span class="block text-[10px] text-slate-400 font-mono tracking-wider uppercase">Cancionero de Adrián Pisabarro García</span>
+            <span class="hidden sm:block text-[10px] text-slate-400 font-mono tracking-wider uppercase">Cancionero de Adrián Pisabarro García</span>
           </div>
         </a>
 
         {/* Header Links */}
-        <nav class="flex items-center gap-3 text-sm font-medium">
+        <nav class="flex items-center gap-1.5 sm:gap-3 text-xs sm:text-sm font-medium">
           <a 
             href="/" 
-            class="text-slate-300 hover:text-emerald-400 font-semibold transition px-3.5 py-2 rounded-xl hover:bg-slate-800/60"
+            class="text-slate-300 hover:text-emerald-400 font-semibold transition px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl hover:bg-slate-800/60"
           >
             Canciones
           </a>
           <a 
             href="/importar-ia" 
-            class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-bold transition px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 shadow-sm"
+            class="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-bold transition px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 shadow-sm"
           >
             <span>Importar con IA</span>
-            <span class="text-xs">✨</span>
+            <span class="text-[10px] sm:text-xs">✨</span>
           </a>
         </nav>
       </div>

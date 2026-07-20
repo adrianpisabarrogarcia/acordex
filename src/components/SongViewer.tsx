@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   parseSongText, 
   transposeNote, 
-  type SongLine 
+  SongLine 
 } from '../utils/chordTransposer';
 import { ChordDiagramModal } from './ChordDiagramModal';
 import { Metronome } from './Metronome';
@@ -52,7 +52,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   const [scrollSpeed, setScrollSpeed] = useState(2); // 1-5 speed scale
 
   // UI Customization
-  const [fontSize, setFontSize] = useState(18); // px
+  const [fontSize, setFontSize] = useState(17); // px default for mobile readability
   const [stageMode, setStageMode] = useState(false);
   const [showMetronome, setShowMetronome] = useState(false);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
@@ -62,7 +62,6 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   const soundingKey = transposeNote(originalKey, semitones, preferFlats);
 
   // 2. Net chord shape transposition:
-  // When a capo is placed on fret N, the finger shapes transpose down by N semitones relative to key transposition
   const netShapeTransposition = semitones - (capo - originalCapo);
 
   // 3. Parse lines with net shape transposition and flat preference
@@ -102,42 +101,44 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   return (
     <div className={`min-h-screen transition-colors duration-300 ${stageMode ? 'bg-black text-amber-100' : 'bg-slate-950 text-slate-100'}`}>
       
-      {/* Top Floating Control Toolbar */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-2xl px-4 py-3 no-print">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      {/* Top Floating Control Toolbar (Responsive & Swipeable on Mobile) */}
+      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-2xl px-3 sm:px-4 py-2.5 no-print">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           
           {/* Song Info summary */}
-          <div>
-            <h1 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-              {title}
-              <span className="text-xs font-normal px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
-                Tono real: {soundingKey}
-              </span>
-            </h1>
-            <p className="text-xs text-slate-400 font-medium">{artist}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                <span className="truncate max-w-[200px] sm:max-w-none">{title}</span>
+                <span className="shrink-0 text-[11px] sm:text-xs font-normal px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
+                  Tono: {soundingKey}
+                </span>
+              </h1>
+              <p className="text-xs text-slate-400 font-medium truncate">{artist}</p>
+            </div>
           </div>
 
-          {/* Interactive Toolbars */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Interactive Toolbars (Horizontal Touch Scroll on Mobile) */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs">
             
             {/* Transposer Group */}
-            <div className="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700/60 shadow-inner">
-              <span className="text-xs text-slate-400 font-medium px-2 flex items-center gap-1">
+            <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60 shadow-inner">
+              <span className="text-[11px] text-slate-400 font-medium px-1.5 flex items-center gap-1">
                 <Music className="w-3.5 h-3.5 text-emerald-400" /> Tono
               </span>
               <button
                 onClick={() => setSemitones((s) => s - 1)}
-                className="px-2.5 py-1 text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition active:scale-95"
+                className="px-2.5 py-1 font-bold bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition active:scale-95"
                 title="Bajar 1 semitono"
               >
                 -1
               </button>
-              <span className="w-8 text-center font-mono font-bold text-sm text-emerald-400">
+              <span className="w-7 text-center font-mono font-bold text-emerald-400">
                 {semitones > 0 ? `+${semitones}` : semitones}
               </span>
               <button
                 onClick={() => setSemitones((s) => s + 1)}
-                className="px-2.5 py-1 text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition active:scale-95"
+                className="px-2.5 py-1 font-bold bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition active:scale-95"
                 title="Subir 1 semitono"
               >
                 +1
@@ -145,14 +146,14 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             </div>
 
             {/* Capo Selector */}
-            <div className="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700/60">
-              <span className="text-xs text-slate-400 font-medium px-2">Cejilla</span>
+            <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60">
+              <span className="text-[11px] text-slate-400 font-medium px-1.5">Cejilla</span>
               <select
                 value={capo}
                 onChange={(e) => setCapo(Number(e.target.value))}
-                className="bg-slate-900 text-amber-400 font-bold text-xs rounded-lg px-2 py-1 border border-slate-700 outline-none cursor-pointer"
+                className="bg-slate-900 text-amber-400 font-bold rounded-lg px-2 py-1 border border-slate-700 outline-none cursor-pointer"
               >
-                <option value={0}>Sin cejilla</option>
+                <option value={0}>Sin capo</option>
                 <option value={1}>Traste 1</option>
                 <option value={2}>Traste 2</option>
                 <option value={3}>Traste 3</option>
@@ -167,18 +168,18 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             {isCustomized && (
               <button
                 onClick={resetKeyAndCapo}
-                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold flex items-center gap-1 transition"
+                className="shrink-0 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold flex items-center gap-1 transition"
                 title="Restablecer tono y cejilla originales"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Restablecer
+                <RotateCcw className="w-3.5 h-3.5" />
               </button>
             )}
 
             {/* Auto-scroll controls */}
-            <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700/60">
+            <div className="flex items-center shrink-0 gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700/60">
               <button
                 onClick={() => setIsScrolling(!isScrolling)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+                className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition ${
                   isScrolling
                     ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 animate-pulse'
                     : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
@@ -186,11 +187,11 @@ export const SongViewer: React.FC<SongViewerProps> = ({
               >
                 {isScrolling ? (
                   <>
-                    <Pause className="w-3.5 h-3.5 fill-current" /> Pausar
+                    <Pause className="w-3.5 h-3.5 fill-current" /> Pausa
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5 fill-current" /> Autoscroll
+                    <Play className="w-3.5 h-3.5 fill-current" /> Scroll
                   </>
                 )}
               </button>
@@ -198,41 +199,40 @@ export const SongViewer: React.FC<SongViewerProps> = ({
               <select
                 value={scrollSpeed}
                 onChange={(e) => setScrollSpeed(Number(e.target.value))}
-                className="bg-slate-900 text-slate-200 text-xs rounded-lg px-2 py-1 border border-slate-700 outline-none cursor-pointer font-mono"
-                title="Velocidad de desplazamiento"
+                className="bg-slate-900 text-slate-200 rounded-lg px-1.5 py-1 border border-slate-700 outline-none cursor-pointer font-mono"
               >
-                <option value={1}>Vel. 1x</option>
-                <option value={2}>Vel. 2x</option>
-                <option value={3}>Vel. 3x</option>
-                <option value={5}>Vel. 5x</option>
+                <option value={1}>1x</option>
+                <option value={2}>2x</option>
+                <option value={3}>3x</option>
+                <option value={5}>5x</option>
               </select>
             </div>
 
             {/* Font Size controls */}
-            <div className="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700/60">
+            <div className="flex items-center shrink-0 bg-slate-800 rounded-xl p-1 border border-slate-700/60">
               <button
-                onClick={() => setFontSize((f) => Math.max(14, f - 2))}
-                className="p-1 text-slate-400 hover:text-white rounded text-xs font-bold"
+                onClick={() => setFontSize((f) => Math.max(13, f - 1))}
+                className="px-2 py-0.5 text-slate-300 hover:text-white rounded font-bold"
                 title="Disminuir texto"
               >
                 A-
               </button>
-              <span className="text-xs font-mono text-slate-300 px-1">{fontSize}px</span>
+              <span className="font-mono text-slate-300 px-1">{fontSize}</span>
               <button
-                onClick={() => setFontSize((f) => Math.min(28, f + 2))}
-                className="p-1 text-slate-400 hover:text-white rounded text-xs font-bold"
+                onClick={() => setFontSize((f) => Math.min(26, f + 1))}
+                className="px-2 py-0.5 text-slate-300 hover:text-white rounded font-bold"
                 title="Aumentar texto"
               >
                 A+
               </button>
             </div>
 
-            {/* Metronome Drawer Toggle */}
+            {/* Metronome Toggle */}
             <button
               onClick={() => setShowMetronome(!showMetronome)}
-              className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1 border transition ${
+              className={`p-2 rounded-xl shrink-0 border transition ${
                 showMetronome
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  ? 'bg-indigo-600 text-white border-indigo-500'
                   : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
               }`}
               title="Metrónomo"
@@ -243,12 +243,12 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             {/* Stage Mode Toggle */}
             <button
               onClick={() => setStageMode(!stageMode)}
-              className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1 border transition ${
+              className={`p-2 rounded-xl shrink-0 border transition ${
                 stageMode
                   ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
                   : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
               }`}
-              title="Modo Escenario (Alto contraste)"
+              title="Modo Escenario"
             >
               <Maximize2 className="w-4 h-4" />
             </button>
@@ -256,7 +256,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             {/* Print Button */}
             <button
               onClick={() => window.print()}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition"
+              className="p-2 rounded-xl shrink-0 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
               title="Imprimir o exportar PDF"
             >
               <Printer className="w-4 h-4" />
@@ -266,28 +266,28 @@ export const SongViewer: React.FC<SongViewerProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
 
         {/* Metronome Floating Box if opened */}
         {showMetronome && (
-          <div className="flex justify-center mb-6 animate-in slide-in-from-top duration-300">
+          <div className="flex justify-center mb-4 animate-in slide-in-from-top duration-300">
             <Metronome initialBpm={tempo} />
           </div>
         )}
 
         {/* Metadata Banner: Key, Capo, Rhythm, Tempo */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 no-print shadow-xl">
-          <div className="flex flex-wrap items-center gap-4 text-xs">
+        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 no-print shadow-xl">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs">
             <div className="flex items-center gap-1.5 text-slate-300">
-              <span className="text-slate-500 font-semibold">Tono que suena:</span>
-              <span className="font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-800/60 font-mono">
+              <span className="text-slate-500 font-semibold">Tono:</span>
+              <span className="font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 font-mono">
                 {soundingKey}
               </span>
             </div>
 
             <div className="flex items-center gap-1.5 text-slate-300">
               <span className="text-slate-500 font-semibold">Cejilla:</span>
-              <span className="font-bold text-amber-400 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-800/60">
+              <span className="font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60">
                 {capo > 0 ? `Traste ${capo}` : 'Sin cejilla'}
               </span>
             </div>
@@ -295,8 +295,8 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             {tempo && (
               <div className="flex items-center gap-1.5 text-slate-300">
                 <span className="text-slate-500 font-semibold">Tempo:</span>
-                <span className="font-bold text-indigo-400 bg-indigo-950/60 px-2.5 py-0.5 rounded border border-indigo-800/60 font-mono">
-                  {tempo} BPM ({timeSignature})
+                <span className="font-bold text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/60 font-mono">
+                  {tempo} BPM
                 </span>
               </div>
             )}
@@ -304,30 +304,30 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             {strumming && (
               <div className="flex items-center gap-1.5 text-slate-300">
                 <span className="text-slate-500 font-semibold">Rasgueo:</span>
-                <span className="font-bold text-slate-200 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700 font-mono">
+                <span className="font-bold text-slate-200 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 font-mono">
                   {strumming}
                 </span>
               </div>
             )}
           </div>
 
-          <div className="text-xs text-slate-400 flex items-center gap-1">
-            <Info className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Haz clic en cualquier acorde para ver los trastes</span>
+          <div className="text-[11px] text-slate-400 flex items-center gap-1">
+            <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>Toca cualquier acorde para ver los trastes</span>
           </div>
         </div>
 
         {/* Chords Bar (Clickable chords chips for quick reference) */}
         {uniqueChords.length > 0 && (
           <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3 flex flex-wrap items-center gap-2 no-print">
-            <span className="text-xs font-semibold text-slate-400 mr-2 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Acordes a poner en la guitarra:
+            <span className="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Acordes:
             </span>
             {uniqueChords.map((chord) => (
               <button
                 key={chord}
                 onClick={() => setSelectedChord(chord)}
-                className="px-3 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 font-chord font-bold text-xs transition transform hover:scale-105"
+                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 font-chord font-bold text-xs transition active:scale-95"
               >
                 {chord}
               </button>
@@ -352,7 +352,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
 
         {/* Lyric Sheet with Chords Positioned ABOVE Lyrics */}
         <div 
-          className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 md:p-10 shadow-2xl font-chord leading-relaxed space-y-3 select-text print-container"
+          className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-8 md:p-10 shadow-2xl font-chord leading-relaxed space-y-3 select-text print-container overflow-x-auto"
           style={{ fontSize: `${fontSize}px` }}
         >
           {parsedLines.map((line, idx) => {
@@ -360,7 +360,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
               return (
                 <div
                   key={idx}
-                  className="pt-6 pb-2 text-emerald-400 font-bold text-xs uppercase tracking-widest border-b border-slate-800/80 font-sans flex items-center gap-2 print-section-header"
+                  className="pt-4 sm:pt-6 pb-1.5 sm:pb-2 text-emerald-400 font-bold text-xs uppercase tracking-widest border-b border-slate-800/80 font-sans flex items-center gap-2 print-section-header"
                 >
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50 no-print" />
                   {line.segments[0]?.text}
@@ -373,12 +373,12 @@ export const SongViewer: React.FC<SongViewerProps> = ({
 
             if (isInstrumental) {
               return (
-                <div key={idx} className="flex flex-wrap items-center gap-3 sm:gap-4 py-2.5 my-1 line-row">
+                <div key={idx} className="flex flex-wrap items-center gap-2 sm:gap-4 py-2 my-1 line-row">
                   {line.segments.map((seg, sIdx) => (
                     <button
                       key={sIdx}
                       onClick={() => setSelectedChord(seg.chord!)}
-                      className="px-3.5 py-1.5 rounded-xl font-extrabold text-emerald-400 hover:text-slate-950 bg-emerald-950/90 hover:bg-emerald-400 border border-emerald-500/50 transition-all cursor-pointer font-chord text-sm shadow-md chord-chip-print"
+                      className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-xl font-extrabold text-emerald-400 hover:text-slate-950 bg-emerald-950/90 hover:bg-emerald-400 border border-emerald-500/50 transition-all cursor-pointer font-chord text-xs sm:text-sm shadow-md chord-chip-print active:scale-95"
                       title={`Ver acorde ${seg.chord}`}
                     >
                       {seg.chord}
@@ -389,15 +389,15 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             }
 
             return (
-              <div key={idx} className="line-row flex flex-wrap items-end my-2">
+              <div key={idx} className="line-row flex flex-wrap items-end my-1 sm:my-2">
                 {line.segments.map((seg, sIdx) => (
-                  <div key={sIdx} className="inline-flex flex-col items-start leading-tight mr-1.5">
+                  <div key={sIdx} className="inline-flex flex-col items-start leading-tight mr-1 sm:mr-1.5">
                     {/* Chord row above lyrics */}
-                    <div className="h-7 flex items-center mb-1">
+                    <div className="h-6 sm:h-7 flex items-center mb-0.5 sm:mb-1">
                       {seg.chord ? (
                         <button
                           onClick={() => setSelectedChord(seg.chord!)}
-                          className="px-1.5 py-0.5 rounded font-extrabold text-emerald-400 hover:text-white bg-emerald-950/80 hover:bg-emerald-500 border border-emerald-500/50 transition-all cursor-pointer font-chord text-[0.85em] shadow-sm chord-chip-print"
+                          className="px-1.5 py-0.5 rounded font-extrabold text-emerald-400 hover:text-white bg-emerald-950/80 hover:bg-emerald-500 border border-emerald-500/50 transition-all cursor-pointer font-chord text-[0.82em] sm:text-[0.85em] shadow-sm chord-chip-print active:scale-95"
                           title={`Ver acorde ${seg.chord}`}
                         >
                           {seg.chord}
@@ -418,9 +418,9 @@ export const SongViewer: React.FC<SongViewerProps> = ({
 
         {/* Optional YouTube Video Embed */}
         {youtubeUrl && (
-          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 no-print space-y-3">
-            <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-              <Play className="w-4 h-4 text-red-500 fill-current" /> Vídeo / Audio original de referencia
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3.5 sm:p-4 no-print space-y-3">
+            <h3 className="text-xs sm:text-sm font-semibold text-slate-300 flex items-center gap-2">
+              <Play className="w-4 h-4 text-red-500 fill-current shrink-0" /> Vídeo / Audio original de referencia
             </h3>
             <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-800">
               <iframe
