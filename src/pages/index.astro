@@ -1,0 +1,102 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { SongFilterSearch } from '../components/SongFilterSearch';
+import type { SongItem } from '../components/SongCard';
+
+const songsRaw = await getCollection('songs');
+
+const songs: SongItem[] = songsRaw.map((song) => ({
+  slug: song.id.replace(/\.md$/, ''),
+  title: song.data.title,
+  artist: song.data.artist,
+  key: song.data.key,
+  capo: song.data.capo,
+  tags: song.data.tags,
+  difficulty: song.data.difficulty,
+}));
+---
+
+<Layout title="Acordex | Repositorio de Canciones con Acordes Interactivos">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+    
+    {/* Hero Header Banner */}
+    <section class="relative rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/90 to-indigo-950/40 border border-slate-800 p-8 md:p-12 overflow-hidden shadow-2xl">
+      <div class="absolute -right-20 -top-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative z-10 max-w-3xl space-y-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Estudio de acordes para guitarra & ukelele
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
+          Tu cancionero interactivo <br />
+          <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
+            con transporte y diagramas al vuelo
+          </span>
+        </h1>
+
+        <p class="text-slate-300 text-base md:text-lg leading-relaxed">
+          Explora la colección, cambia de tonalidad con un clic, ajusta la cejilla, activa el autoscroll manos libres o practica con el metrónomo integrado.
+        </p>
+
+        {/* Quick stats pills */}
+        <div class="pt-4 flex flex-wrap gap-4 text-xs font-mono text-slate-400">
+          <div class="px-3 py-1.5 rounded-lg bg-slate-950/60 border border-slate-800 flex items-center gap-2">
+            <span class="text-emerald-400 font-bold text-sm">{songs.length}</span> Canciones cargadas
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Interactive Search & Song Catalog */}
+    <section>
+      <SongFilterSearch client:load songs={songs} />
+    </section>
+
+    {/* Features section */}
+    <section id="acordes-info" class="pt-12 border-t border-slate-800/80 space-y-6">
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <h2 class="text-2xl font-bold text-white">Herramientas de Ensayo Incorporadas</h2>
+        <p class="text-sm text-slate-400">Todo lo que necesitas para tocar la guitarra solo o con tu grupo.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-2">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
+            🎶
+          </div>
+          <h3 class="font-bold text-white text-base">Transpositor Inteligente</h3>
+          <p class="text-xs text-slate-400">Sube o baja semitonos con preservación exacta de variaciones y acordes con bajo (slash chords).</p>
+        </div>
+
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-2">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
+            🎸
+          </div>
+          <h3 class="font-bold text-white text-base">Diagramas de Trastes</h3>
+          <p class="text-xs text-slate-400">Haz clic en cualquier acorde para ver la posición exacta de los dedos en el mástil en SVG de alta definición.</p>
+        </div>
+
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-2">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold">
+            📜
+          </div>
+          <h3 class="font-bold text-white text-base">Autoscroll Manos Libres</h3>
+          <p class="text-xs text-slate-400">Desplazamiento automático fluido con control de velocidad para tocar sin soltar el instrumento.</p>
+        </div>
+
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-2">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold">
+            ⏱️
+          </div>
+          <h3 class="font-bold text-white text-base">Metrónomo Web Synthesizer</h3>
+          <p class="text-xs text-slate-400">Metrónomo sintetizado mediante Web Audio API con acento de compás y selección de tempo.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</Layout>

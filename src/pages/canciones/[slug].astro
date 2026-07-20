@@ -1,0 +1,37 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection, getEntry } from 'astro:content';
+import { SongViewer } from '../../components/SongViewer';
+
+export async function getStaticPaths() {
+  const songs = await getCollection('songs');
+  return songs.map((song) => {
+    const slug = song.id.replace(/\.md$/, '');
+    return {
+      params: { slug },
+      props: { song },
+    };
+  });
+}
+
+const { song } = Astro.props;
+const { data, body } = song;
+---
+
+<Layout 
+  title={`${data.title} - ${data.artist} (Acordes y Letra) | Acordex`}
+  description={`Acordes y letra de ${data.title} de ${data.artist}. Tonalidad original ${data.key}. Transpositor interactivo y diagramas de guitarra en Acordex.`}
+>
+  <SongViewer
+    client:load
+    title={data.title}
+    artist={data.artist}
+    originalKey={data.key}
+    originalCapo={data.capo}
+    tempo={data.tempo}
+    timeSignature={data.timeSignature}
+    strumming={data.strumming}
+    rawContent={body}
+    youtubeUrl={data.youtubeUrl}
+  />
+</Layout>

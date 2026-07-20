@@ -1,0 +1,101 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { AIPromptCopier } from '../components/AIPromptCopier';
+import { Sparkles, Bot, FileCode, CheckCircle, ArrowRight, Zap, FolderPlus } from 'lucide-react';
+---
+
+<Layout 
+  title="Importar Canciones con Inteligencia Artificial | Acordex"
+  description="Guía paso a paso para extraer, estructurar e importar cualquier canción a tu cancionero Acordex utilizando la IA (ChatGPT, Gemini, Claude)."
+>
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+    
+    {/* Hero Guide Banner */}
+    <div class="relative rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/90 to-indigo-950/60 border border-slate-800 p-8 md:p-12 shadow-2xl overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-10 -bottom-10 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative z-10 max-w-3xl space-y-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
+          <Sparkles class="w-3.5 h-3.5 text-amber-400" />
+          Guía de Automatización con IA
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
+          Cómo importar cualquier canción a Acordex <br />
+          <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
+            usando Inteligencia Artificial en segundos
+          </span>
+        </h1>
+
+        <p class="text-slate-300 text-base md:text-lg leading-relaxed">
+          Pasa cualquier partitura, PDF, foto de cuaderno o vídeo de YouTube a un archivo Markdown perfectamente estructurado y con acordes encima de la letra.
+        </p>
+      </div>
+    </div>
+
+    {/* 3 Steps Explanatory Cards */}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-3 relative overflow-hidden group hover:border-emerald-500/50 transition">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-bold flex items-center justify-center text-lg">
+          1
+        </div>
+        <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition">Copia el Prompt Maestro</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Usa nuestro generador de prompts para darle las instrucciones exactas a la IA sobre las etiquetas de frontmatter y los acordes corcheteados <code class="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded">[Acorde]</code>.
+        </p>
+      </div>
+
+      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-3 relative overflow-hidden group hover:border-indigo-500/50 transition">
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 font-bold flex items-center justify-center text-lg">
+          2
+        </div>
+        <h3 class="text-lg font-bold text-white group-hover:text-indigo-400 transition">Pega en tu IA (ChatGPT / Gemini)</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Adjunta la letra, sube una foto de tu libreta de canciones o dale el enlace de YouTube. La IA extraerá los acordes y la tonalidad automáticamente.
+        </p>
+      </div>
+
+      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-3 relative overflow-hidden group hover:border-amber-500/50 transition">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 font-bold flex items-center justify-center text-lg">
+          3
+        </div>
+        <h3 class="text-lg font-bold text-white group-hover:text-amber-400 transition">Guarda el archivo .md</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Crea un nuevo archivo en la carpeta <code class="text-amber-400 bg-slate-950 px-1 py-0.5 rounded">src/content/songs/nombre.md</code>. ¡Astro lo compilará al instante sin reiniciar el servidor!
+        </p>
+      </div>
+
+    </div>
+
+    {/* Interactive AIPromptCopier Component */}
+    <section>
+      <AIPromptCopier client:load />
+    </section>
+
+    {/* Folder Structure Reference */}
+    <section class="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-4">
+      <div class="flex items-center gap-3">
+        <FolderPlus class="w-6 h-6 text-emerald-400" />
+        <h3 class="text-xl font-bold text-white">¿Dónde se guardan las canciones en el proyecto?</h3>
+      </div>
+
+      <p class="text-sm text-slate-300">
+        Cada canción vive como un archivo Markdown estático dentro del repositorio. La estructura en tu disco duro es:
+      </p>
+
+      <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-slate-300 leading-relaxed space-y-1">
+        <p class="text-slate-500">acordex/</p>
+        <p className="pl-4 text-slate-400">└── src/</p>
+        <p className="pl-8 text-emerald-400 font-bold">└── content/</p>
+        <p className="pl-12 text-emerald-400 font-bold">└── songs/</p>
+        <p className="pl-16 text-slate-200">├── la-flaca.md</p>
+        <p className="pl-16 text-slate-200">├── soldadito-marinero.md</p>
+        <p className="pl-16 text-slate-200">├── wonderwall.md</p>
+        <p className="pl-16 text-slate-400">└── <span class="text-amber-400 font-bold">tu-nueva-cancion.md</span>  ← ¡Añade tu archivo aquí!</p>
+      </div>
+    </section>
+
+  </main>
+</Layout>

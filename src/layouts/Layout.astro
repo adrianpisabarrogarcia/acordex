@@ -1,0 +1,106 @@
+---
+import '../styles/global.css';
+import { BackToTop } from '../components/BackToTop';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Acordex - Repositorio interactivo de canciones con acordes para guitarra' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="dark scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO Meta Tags -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+
+    <!-- Google Fonts: Plus Jakarta Sans, Space Grotesk & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Space+Grotesk:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased relative overflow-x-hidden">
+    
+    {/* High Visibility Animated Ambient Background Glows */}
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden no-print" aria-hidden="true">
+      <div class="absolute -top-10 -left-10 w-[36rem] h-[36rem] bg-emerald-500/35 rounded-full blur-[90px] animate-blob-1"></div>
+      <div class="absolute top-1/4 -right-10 w-[38rem] h-[38rem] bg-indigo-600/35 rounded-full blur-[100px] animate-blob-2"></div>
+      <div class="absolute bottom-10 left-1/4 w-[34rem] h-[34rem] bg-purple-600/30 rounded-full blur-[90px] animate-blob-3"></div>
+      <div class="absolute top-1/2 left-1/2 w-[28rem] h-[28rem] bg-amber-400/25 rounded-full blur-[80px] animate-blob-4"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#0b0f19_100%)] opacity-50"></div>
+    </div>
+
+    {/* Navigation Header */}
+    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30 no-print">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        
+        {/* Brand Logo */}
+        <a href="/" class="flex items-center gap-2.5 group">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition duration-300">
+            <svg class="w-6 h-6 text-slate-950 stroke-current stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+          </div>
+          <div>
+            <span class="text-xl font-extrabold tracking-tight text-white group-hover:text-emerald-400 transition">
+              Acordex
+            </span>
+            <span class="block text-[10px] text-slate-400 font-mono tracking-wider uppercase">Cancionero de Adrián Pisabarro García</span>
+          </div>
+        </a>
+
+        {/* Header Links */}
+        <nav class="flex items-center gap-3 text-sm font-medium">
+          <a 
+            href="/" 
+            class="text-slate-300 hover:text-emerald-400 font-semibold transition px-3.5 py-2 rounded-xl hover:bg-slate-800/60"
+          >
+            Canciones
+          </a>
+          <a 
+            href="/importar-ia" 
+            class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-bold transition px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 shadow-sm"
+          >
+            <span>Importar con IA</span>
+            <span class="text-xs">✨</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    {/* Main Page Slot */}
+    <div class="flex-grow relative z-10">
+      <slot />
+    </div>
+
+    {/* Footer */}
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 mt-16 no-print text-xs text-slate-500 relative z-10">
+      <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+        <p class="font-medium text-slate-400">
+          Acordex — Tu repositorio personal de canciones con acordes interactivos.
+        </p>
+        <p class="text-slate-400">
+          Hecho por <a href="https://adrianpisabarro.com" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300 font-semibold transition hover:underline">Adrián</a> con mucho ❤️
+        </p>
+      </div>
+    </footer>
+    {/* Floating Back To Top Button */}
+    <BackToTop client:load />
+  </body>
+</html>
