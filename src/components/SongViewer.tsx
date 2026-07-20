@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   parseSongText, 
   transposeNote, 
@@ -79,8 +80,13 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   const [fontScale, setFontScale] = useState(1);
   const [showMetronome, setShowMetronome] = useState(false);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const slideContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Smooth slide cross-fade transition
   useEffect(() => {
@@ -238,189 +244,192 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   return (
     <div className={`min-h-screen transition-colors duration-300 ${stageMode ? 'bg-black text-amber-100' : 'bg-slate-950 text-slate-100'}`}>
       
-      {/* Fullscreen TV Slide Presentation Mode (Pure Lyrics, No Chords, Arrow Key Controlled) */}
-      {projectorMode ? (
-        <div className="fixed inset-0 z-[9999] bg-black text-white flex flex-col justify-between p-6 sm:p-12 select-none animate-in fade-in duration-300">
-          
-          {/* Top Bar: Song Title, Section Pill with Multiplier & Slide Counter */}
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-3">
-                {title}
-                {(() => {
-                  const fullTitle = slides[activeSlideIndex]?.title || 'Letra';
-                  const match = fullTitle.match(/^(.*?)\s*(x\d+|\(x\d+\))$/i);
-                  const mainTitle = match ? match[1] : fullTitle;
-                  const repeatTag = match ? match[2].replace(/[()]/g, '') : null;
-
-                  return (
-                    <span className="inline-flex items-center gap-2">
-                      <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest font-mono">
-                        {mainTitle}
-                      </span>
-                      {repeatTag && (
-                        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest font-mono animate-pulse">
-                          {repeatTag}
-                        </span>
-                      )}
-                    </span>
-                  );
-                })()}
-              </h2>
-              <p className="text-xs text-slate-400 font-medium">{artist}</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Toggle Chords in TV Mode Button */}
-              <button
-                onClick={() => setShowChordsInTvMode(!showChordsInTvMode)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold text-xs transition border cursor-pointer ${
-                  showChordsInTvMode
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
-                    : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
-                }`}
-                title="Mostrar u ocultar acordes en Modo TV"
-              >
-                <Music className="w-4 h-4" />
-                <span>{showChordsInTvMode ? 'Acordes ON' : 'Solo Letra'}</span>
-              </button>
-
-              <span className="text-sm font-mono font-bold text-slate-300 bg-slate-900 px-3 py-1 rounded-xl border border-slate-800">
-                {activeSlideIndex + 1} / {slides.length}
-              </span>
-              <button
-                onClick={toggleProjectorMode}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition"
-                title="Salir del Modo TV (Esc)"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Main Slide Display (Pure Lyrics OR Lyrics with Chords) */}
-          <div 
-            ref={slideContainerRef}
-            className="my-auto max-w-6xl mx-auto w-full text-center py-4 sm:py-8 overflow-hidden flex flex-col justify-center items-center flex-grow"
-          >
-            <div 
-              className={`w-full transition-all duration-300 ease-out transform ${
-                fadeState === 'in'
-                  ? 'opacity-100 translate-y-0 scale-100'
-                  : 'opacity-0 translate-y-3 scale-[0.98]'
-              } ${getSlideFontClass(slides[activeSlideIndex]?.lines.length || 0)}`}
-              style={{ zoom: fontScale }}
-            >
-              {showChordsInTvMode ? (
-                /* TV Mode WITH Transposed Chords */
-                <div className="space-y-4 sm:space-y-6">
-                  {parseSongText(
-                    (slides[activeSlideIndex]?.rawLines || []).join('\n'),
-                    semitones,
-                    preferFlats
-                  ).map((line, lIdx) => {
-                    if (line.isSectionHeader) return null;
-
-                    const isInstrumental = line.segments.length > 0 && line.segments.every((s) => s.chord && s.text.trim() === '');
-
-                    if (isInstrumental) {
-                      return (
-                        <div key={lIdx} className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 py-2">
-                          {line.segments.map((seg, sIdx) => (
-                            <span
-                              key={sIdx}
-                              className="px-3.5 py-1.5 rounded-xl font-extrabold text-emerald-400 bg-emerald-950/90 border border-emerald-500/50 font-chord text-lg sm:text-2xl shadow-lg"
-                            >
-                              {seg.chord}
-                            </span>
-                          ))}
-                        </div>
-                      );
-                    }
+      {/* Fullscreen TV Slide Presentation Mode (Pure Lyrics or Chords, Portal to document.body) */}
+      {projectorMode && mounted ? (
+        createPortal(
+          <div className="fixed inset-0 z-[99999] bg-black text-white flex flex-col justify-between p-6 sm:p-12 select-none animate-in fade-in duration-300">
+            
+            {/* Top Bar: Song Title, Section Pill with Multiplier & Slide Counter */}
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-3">
+                  {title}
+                  {(() => {
+                    const fullTitle = slides[activeSlideIndex]?.title || 'Letra';
+                    const match = fullTitle.match(/^(.*?)\s*(x\d+|\(x\d+\))$/i);
+                    const mainTitle = match ? match[1] : fullTitle;
+                    const repeatTag = match ? match[2].replace(/[()]/g, '') : null;
 
                     return (
-                      <div key={lIdx} className="flex flex-wrap items-end justify-center my-1 sm:my-2">
-                        {line.segments.map((seg, sIdx) => {
-                          const hasTrailingSpace = /\s$/.test(seg.text) || seg.text === '' || seg.text === ' ';
-                          const marginClass = hasTrailingSpace ? 'mr-2 sm:mr-3' : 'mr-0.5';
-
-                          return (
-                            <div key={sIdx} className={`inline-flex flex-col items-start leading-tight min-w-max ${marginClass}`}>
-                              {/* Chord above lyric in TV mode */}
-                              <div className="h-7 sm:h-9 flex items-center mb-1 min-w-full justify-start">
-                                {seg.chord ? (
-                                  <span className="px-2 py-0.5 rounded-lg font-extrabold text-emerald-400 bg-emerald-950/90 border border-emerald-500/50 font-chord text-[0.75em] sm:text-[0.85em] shadow-md whitespace-nowrap">
-                                    {seg.chord}
-                                  </span>
-                                ) : null}
-                              </div>
-
-                              {/* Lyric text below chord */}
-                              <span className="whitespace-pre-wrap text-slate-100 font-extrabold font-sans tracking-wide">
-                                {seg.text}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest font-mono">
+                          {mainTitle}
+                        </span>
+                        {repeatTag && (
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest font-mono animate-pulse">
+                            {repeatTag}
+                          </span>
+                        )}
+                      </span>
                     );
-                  })}
-                </div>
-              ) : (
-                /* TV Mode PURE LYRICS (Without Chords) */
-                slides[activeSlideIndex]?.lines.map((lyricLine, lIdx) => (
-                  <p 
-                    key={lIdx} 
-                    className="font-extrabold tracking-wide text-slate-100 font-sans text-balance drop-shadow-md my-2"
-                  >
-                    {lyricLine}
-                  </p>
-                ))
-              )}
+                  })()}
+                </h2>
+                <p className="text-xs text-slate-400 font-medium">{artist}</p>
+              </div>
 
-              {/* Repeat Multiplier Badge below lyrics if section has x2, x4 etc. */}
-              {(() => {
-                const fullTitle = slides[activeSlideIndex]?.title || '';
-                const match = fullTitle.match(/x\d+/i);
-                if (!match) return null;
-                const multiplier = match[0].toLowerCase();
+              <div className="flex items-center gap-3">
+                {/* Toggle Chords in TV Mode Button */}
+                <button
+                  onClick={() => setShowChordsInTvMode(!showChordsInTvMode)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold text-xs transition border cursor-pointer ${
+                    showChordsInTvMode
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                  }`}
+                  title="Mostrar u ocultar acordes en Modo TV"
+                >
+                  <Music className="w-4 h-4" />
+                  <span>{showChordsInTvMode ? 'Acordes ON' : 'Solo Letra'}</span>
+                </button>
 
-                return (
-                  <div className="mt-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm sm:text-base font-bold tracking-wider font-mono shadow-lg">
-                    <span className="opacity-80">🔁 Repetir</span>
-                    <span className="text-amber-400 text-lg font-black">{multiplier}</span>
+                <span className="text-sm font-mono font-bold text-slate-300 bg-slate-900 px-3 py-1 rounded-xl border border-slate-800">
+                  {activeSlideIndex + 1} / {slides.length}
+                </span>
+                <button
+                  onClick={toggleProjectorMode}
+                  className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition"
+                  title="Salir del Modo TV (Esc)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Main Slide Display (Pure Lyrics OR Lyrics with Chords) */}
+            <div 
+              ref={slideContainerRef}
+              className="my-auto max-w-6xl mx-auto w-full text-center py-4 sm:py-8 overflow-hidden flex flex-col justify-center items-center flex-grow"
+            >
+              <div 
+                className={`w-full transition-all duration-300 ease-out transform ${
+                  fadeState === 'in'
+                    ? 'opacity-100 translate-y-0 scale-100'
+                    : 'opacity-0 translate-y-3 scale-[0.98]'
+                } ${getSlideFontClass(slides[activeSlideIndex]?.lines.length || 0)}`}
+                style={{ zoom: fontScale }}
+              >
+                {showChordsInTvMode ? (
+                  /* TV Mode WITH Transposed Chords */
+                  <div className="space-y-4 sm:space-y-6">
+                    {parseSongText(
+                      (slides[activeSlideIndex]?.rawLines || []).join('\n'),
+                      semitones,
+                      preferFlats
+                    ).map((line, lIdx) => {
+                      if (line.isSectionHeader) return null;
+
+                      const isInstrumental = line.segments.length > 0 && line.segments.every((s) => s.chord && s.text.trim() === '');
+
+                      if (isInstrumental) {
+                        return (
+                          <div key={lIdx} className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 py-2">
+                            {line.segments.map((seg, sIdx) => (
+                              <span
+                                key={sIdx}
+                                className="px-3.5 py-1.5 rounded-xl font-extrabold text-emerald-400 bg-emerald-950/90 border border-emerald-500/50 font-chord text-lg sm:text-2xl shadow-lg"
+                              >
+                                {seg.chord}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={lIdx} className="flex flex-wrap items-end justify-center my-1 sm:my-2">
+                          {line.segments.map((seg, sIdx) => {
+                            const hasTrailingSpace = /\s$/.test(seg.text) || seg.text === '' || seg.text === ' ';
+                            const marginClass = hasTrailingSpace ? 'mr-2 sm:mr-3' : 'mr-0.5';
+
+                            return (
+                              <div key={sIdx} className={`inline-flex flex-col items-start leading-tight min-w-max ${marginClass}`}>
+                                {/* Chord above lyric in TV mode */}
+                                <div className="h-7 sm:h-9 flex items-center mb-1 min-w-full justify-start">
+                                  {seg.chord ? (
+                                    <span className="px-2 py-0.5 rounded-lg font-extrabold text-emerald-400 bg-emerald-950/90 border border-emerald-500/50 font-chord text-[0.75em] sm:text-[0.85em] shadow-md whitespace-nowrap">
+                                      {seg.chord}
+                                    </span>
+                                  ) : null}
+                                </div>
+
+                                {/* Lyric text below chord */}
+                                <span className="whitespace-pre-wrap text-slate-100 font-extrabold font-sans tracking-wide">
+                                  {seg.text}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })()}
+                ) : (
+                  /* TV Mode PURE LYRICS (Without Chords) */
+                  slides[activeSlideIndex]?.lines.map((lyricLine, lIdx) => (
+                    <p 
+                      key={lIdx} 
+                      className="font-extrabold tracking-wide text-slate-100 font-sans text-balance drop-shadow-md my-2"
+                    >
+                      {lyricLine}
+                    </p>
+                  ))
+                )}
+
+                {/* Repeat Multiplier Badge below lyrics if section has x2, x4 etc. */}
+                {(() => {
+                  const fullTitle = slides[activeSlideIndex]?.title || '';
+                  const match = fullTitle.match(/x\d+/i);
+                  if (!match) return null;
+                  const multiplier = match[0].toLowerCase();
+
+                  return (
+                    <div className="mt-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm sm:text-base font-bold tracking-wider font-mono shadow-lg">
+                      <span className="opacity-80">🔁 Repetir</span>
+                      <span className="text-amber-400 text-lg font-black">{multiplier}</span>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
-          </div>
 
-          {/* Bottom Bar: Touch & Keyboard Navigation Controls */}
-          <div className="flex items-center justify-between border-t border-slate-800/80 pt-4">
-            <button
-              disabled={slideIndex === 0}
-              onClick={() => setSlideIndex((prev) => Math.max(0, prev - 1))}
-              className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none text-emerald-400 font-bold border border-slate-800 flex items-center gap-2 transition active:scale-95 text-sm"
-            >
-              <ChevronLeft className="w-5 h-5" /> Anterior
-            </button>
+            {/* Bottom Bar: Touch & Keyboard Navigation Controls */}
+            <div className="flex items-center justify-between border-t border-slate-800/80 pt-4">
+              <button
+                disabled={slideIndex === 0}
+                onClick={() => setSlideIndex((prev) => Math.max(0, prev - 1))}
+                className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none text-emerald-400 font-bold border border-slate-800 flex items-center gap-2 transition active:scale-95 text-sm"
+              >
+                <ChevronLeft className="w-5 h-5" /> Anterior
+              </button>
 
-            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono">
-              <span className="px-2 py-1 bg-slate-900 rounded border border-slate-800">←</span>
-              <span className="px-2 py-1 bg-slate-900 rounded border border-slate-800">→</span>
-              <span>o Espacio para cambiar diapositiva</span>
+              <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono">
+                <span className="px-2 py-1 bg-slate-900 rounded border border-slate-800">←</span>
+                <span className="px-2 py-1 bg-slate-900 rounded border border-slate-800">→</span>
+                <span>o Espacio para cambiar diapositiva</span>
+              </div>
+
+              <button
+                disabled={slideIndex === slides.length - 1}
+                onClick={() => setSlideIndex((prev) => Math.min(slides.length - 1, prev + 1))}
+                className="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 disabled:opacity-30 disabled:pointer-events-none font-extrabold border border-emerald-400 flex items-center gap-2 transition active:scale-95 shadow-lg shadow-emerald-500/20 text-sm"
+              >
+                Siguiente <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
 
-            <button
-              disabled={slideIndex === slides.length - 1}
-              onClick={() => setSlideIndex((prev) => Math.min(slides.length - 1, prev + 1))}
-              className="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 disabled:opacity-30 disabled:pointer-events-none font-extrabold border border-emerald-400 flex items-center gap-2 transition active:scale-95 shadow-lg shadow-emerald-500/20 text-sm"
-            >
-              Siguiente <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-
-        </div>
+          </div>,
+          document.body
+        )
       ) : (
         <>
           {/* Top Floating Control Toolbar (Responsive & Swipeable on Mobile) */}
