@@ -93,23 +93,25 @@ const imageURL = new URL(image, 'https://acordex.vercel.app').href;
         </a>
 
         {/* Header Links */}
-        <nav class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium">
+        <nav class="flex items-center gap-2 text-xs sm:text-sm font-medium">
           <a 
             href="/" 
-            class="flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-extrabold px-3.5 sm:px-4.5 py-2 rounded-xl shadow-lg shadow-emerald-500/25 hover:from-emerald-400 hover:to-emerald-300 transition transform hover:scale-105"
+            class="flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-extrabold px-3 sm:px-4 py-2 rounded-xl shadow-lg shadow-emerald-500/25 hover:from-emerald-400 hover:to-emerald-300 transition transform hover:scale-105"
           >
-            <svg class="w-4 h-4 stroke-current stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="w-4 h-4 shrink-0 stroke-current stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
             </svg>
-            <span>Buscar Canciones</span>
+            <span class="hidden sm:inline">Buscar Canciones</span>
+            <span class="sm:hidden">Buscar</span>
           </a>
 
           <a 
             href="/importar-ia" 
-            class="flex items-center gap-1.5 text-slate-300 hover:text-white font-semibold transition px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60"
+            class="flex items-center gap-1 text-slate-300 hover:text-white font-semibold transition px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60"
           >
-            <span>Importar con IA</span>
+            <span class="hidden sm:inline">Importar con IA</span>
+            <span class="sm:hidden">IA</span>
             <span class="text-amber-400">✨</span>
           </a>
         </nav>
