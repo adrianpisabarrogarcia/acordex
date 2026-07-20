@@ -15,10 +15,11 @@ youtubeUrl: "https://www.youtube.com/watch?v=yKBmiT4cdK0"
 [G]  [Em7]  [Cadd9]  [D]
 
 [Verso 1]
-[G]Tú, el Único Rey que tiene que reinar
-[Em7]El Único Señor al que voy a alabar
-[Cadd9]Hoy levanto el corazón al que lo conquistó
-[D]Simplemente porque Tú eres [G]Dios
+[G]Tú, el Único [Em7]Rey que tiene que rein[Cadd9]ar
+El Único Se[D]ñor al que voy a alab[G]ar
+Hoy levanto el cora[Em7]zón
+Al que lo conquist[Cadd9]ó
+Simple[G]mente porque [D]Tú eres Di[G]os
 
 [Verso 2]
 [G]Quiero ponerte por encima de todo

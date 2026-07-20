@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   parseSongText, 
   transposeNote, 
-  SongLine 
+  type SongLine 
 } from '../utils/chordTransposer';
 import { ChordDiagramModal } from './ChordDiagramModal';
 import { Metronome } from './Metronome';
@@ -295,7 +295,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             {tempo && (
               <div className="flex items-center gap-1.5 text-slate-300">
                 <span className="text-slate-500 font-semibold">Tempo:</span>
-                <span className="font-bold text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/60 font-mono">
+                <span className="font-bold text-indigo-400 bg-indigo-950/60 px-2.5 py-0.5 rounded border border-indigo-800/60 font-mono">
                   {tempo} BPM
                 </span>
               </div>
@@ -304,7 +304,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
             {strumming && (
               <div className="flex items-center gap-1.5 text-slate-300">
                 <span className="text-slate-500 font-semibold">Rasgueo:</span>
-                <span className="font-bold text-slate-200 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 font-mono">
+                <span className="font-bold text-slate-200 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700 font-mono">
                   {strumming}
                 </span>
               </div>
@@ -313,7 +313,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
 
           <div className="text-[11px] text-slate-400 flex items-center gap-1">
             <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>Toca cualquier acorde para ver los trastes</span>
+            <span>Pulsa cualquier acorde para ver los trastes</span>
           </div>
         </div>
 
@@ -327,7 +327,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
               <button
                 key={chord}
                 onClick={() => setSelectedChord(chord)}
-                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 font-chord font-bold text-xs transition active:scale-95"
+                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 font-chord font-bold text-xs transition active:scale-95 cursor-pointer"
               >
                 {chord}
               </button>
@@ -390,27 +390,32 @@ export const SongViewer: React.FC<SongViewerProps> = ({
 
             return (
               <div key={idx} className="line-row flex flex-wrap items-end my-1 sm:my-2">
-                {line.segments.map((seg, sIdx) => (
-                  <div key={sIdx} className="inline-flex flex-col items-start leading-tight mr-1 sm:mr-1.5">
-                    {/* Chord row above lyrics */}
-                    <div className="h-6 sm:h-7 flex items-center mb-0.5 sm:mb-1">
-                      {seg.chord ? (
-                        <button
-                          onClick={() => setSelectedChord(seg.chord!)}
-                          className="px-1.5 py-0.5 rounded font-extrabold text-emerald-400 hover:text-white bg-emerald-950/80 hover:bg-emerald-500 border border-emerald-500/50 transition-all cursor-pointer font-chord text-[0.82em] sm:text-[0.85em] shadow-sm chord-chip-print active:scale-95"
-                          title={`Ver acorde ${seg.chord}`}
-                        >
-                          {seg.chord}
-                        </button>
-                      ) : null}
-                    </div>
+                {line.segments.map((seg, sIdx) => {
+                  const hasTrailingSpace = /\s$/.test(seg.text) || seg.text === '' || seg.text === ' ';
+                  const marginClass = hasTrailingSpace ? 'mr-1 sm:mr-1.5' : 'mr-0';
 
-                    {/* Lyrics text below chord */}
-                    <span className="whitespace-pre-wrap text-slate-200 font-chord pr-0.5 lyric-text-print">
-                      {seg.text}
-                    </span>
-                  </div>
-                ))}
+                  return (
+                    <div key={sIdx} className={`inline-flex flex-col items-start leading-tight ${marginClass}`}>
+                      {/* Chord row above lyrics */}
+                      <div className="h-6 sm:h-7 flex items-center mb-0.5 sm:mb-1">
+                        {seg.chord ? (
+                          <button
+                            onClick={() => setSelectedChord(seg.chord!)}
+                            className="px-1.5 py-0.5 rounded font-extrabold text-emerald-400 hover:text-white bg-emerald-950/80 hover:bg-emerald-500 border border-emerald-500/50 transition-all cursor-pointer font-chord text-[0.82em] sm:text-[0.85em] shadow-sm chord-chip-print active:scale-95"
+                            title={`Ver acorde ${seg.chord}`}
+                          >
+                            {seg.chord}
+                          </button>
+                        ) : null}
+                      </div>
+
+                      {/* Lyrics text below chord */}
+                      <span className="whitespace-pre-wrap text-slate-200 font-chord lyric-text-print">
+                        {seg.text}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
