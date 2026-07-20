@@ -83,6 +83,7 @@ export const SongViewer: React.FC<SongViewerProps> = ({
   const [mounted, setMounted] = useState(false);
 
   const slideContainerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -247,7 +248,23 @@ export const SongViewer: React.FC<SongViewerProps> = ({
       {/* Fullscreen TV Slide Presentation Mode (Pure Lyrics or Chords, Portal to document.body) */}
       {projectorMode && mounted ? (
         createPortal(
-          <div className="fixed inset-0 z-[99999] bg-black text-white flex flex-col p-3 sm:p-12 select-none animate-in fade-in duration-300">
+          <div
+            className="fixed inset-0 z-[99999] bg-black text-white flex flex-col p-3 sm:p-12 select-none animate-in fade-in duration-300"
+            onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              if (touchStartX.current === null) return;
+              const delta = touchStartX.current - e.changedTouches[0].clientX;
+              touchStartX.current = null;
+              if (Math.abs(delta) < 50) return; // ignore small movements / taps
+              if (delta > 0) {
+                // swipe left → siguiente
+                setSlideIndex((prev) => Math.min(slides.length - 1, prev + 1));
+              } else {
+                // swipe right → anterior
+                setSlideIndex((prev) => Math.max(0, prev - 1));
+              }
+            }}
+          >
             
             {/* Top Bar — compact 2-row on mobile, single row on desktop */}
             <div className="border-b border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-0">
